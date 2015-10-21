@@ -16,6 +16,6 @@ shinyServer(function(input, output) {
       return(NULL)
     
     read.csv(regions$datapath, header=input$header, sep=input$sep, 
-				 quote=input$quote)
+				 quote=input$quote,nrows=10)
   })
 })
