@@ -1,7 +1,7 @@
 library(shiny)
 library(markdown)
 
-shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples",
+shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples", id="baseCN",
   tabPanel("Description",
    fluidPage(
    titlePanel("Description"),
@@ -27,7 +27,7 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
 								 'text/comma-separated-values,text/plain', 
 								 '.csv')),
       tags$hr(),
-      	HTML('<b>CSV file manipulate'),
+      	HTML('<b>CSV '),
       checkboxInput('header', 'Header', TRUE),
       radioButtons('sep', 'Separator',
                    c(Comma=',',
@@ -39,9 +39,14 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
                      'Double Quote'='"',
                      'Single Quote'="'"),
                    '"')
+      
     ),
+
     mainPanel(
-      tableOutput('contents')
+      HTML('<b>CSV file manipulate'),
+      tableOutput('contents'),
+      uiOutput('Actionbutton')
+      
     )
   )
 )),
