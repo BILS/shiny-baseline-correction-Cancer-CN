@@ -21,7 +21,7 @@ observeEvent(input$FileActionButton, {
 
                      })
 
-  output$csvtable <- renderTable({
+  output$csvtableRegions <- renderTable({
     
     # input$file1 will be NULL initially. After the user selects
     # and uploads a file, it will be a data frame with 'name',
@@ -29,29 +29,48 @@ observeEvent(input$FileActionButton, {
     # column will contain the local filenames where the data can
     # be found.
     regions <- input$file1
-    sampleList <- input$file2
-    
-
     if (is.null(regions))
       return(NULL)
-    if (!is.null(sampleList))
-	{
-	merge(read.csv(regions$datapath, header=input$header, sep=input$sep, 
-				 quote=input$quote,nrows=10),read.csv(sampleList$datapath, header=input$header, sep=input$sep, 
-				 quote=input$quote,nrows=10))[,-7]
-     
-        }
-     else	 
     
     read.csv(regions$datapath, header=input$header, sep=input$sep, 
 				 quote=input$quote,nrows=10)
   })
+ output$csvtableSample <- renderTable({
+    
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, it will be a data frame with 'name',
+    # 'size', 'type', and 'datapath' columns. The 'datapath'
+    # column will contain the local filenames where the data can
+    # be found.
+    sample <- input$file2
+    if (is.null(sample))
+      return(NULL)
+    
+    read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp, 
+				 quote=input$quotesamp,nrows=10)
+  })
 
-   output$Actionbutton <- renderUI({
+   output$sampleButtonG2Raw <- renderUI({
+             
+       if (is.null(input$file2))
+           return(NULL)
+       actionButton("SampleActionButton", label = "Data Looks OK NEXT plot Raw")
+       })
+
+   output$regionsbuttonsGo2Sample <- renderUI({
              
        if (is.null(input$file1))
            return(NULL)
-       actionButton("FileActionButton", label = "Data Looks OK NEXT")
-})
+       actionButton("RegionsActionButtonGo2Sample", label = "Data looks OK Load Sample?")
+       })
+
+    output$regionsbuttonsGo2PlotRaw <- renderUI({
+             
+       if (is.null(input$file1))
+           return(NULL)
+       actionButton("RegionsActionButtonGo2PlotRaw", label = "Data looks OK plot Raw?")
+       })
+
+
  
 })
