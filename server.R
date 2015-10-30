@@ -1,15 +1,27 @@
 library(shiny)
+library(CopyNumber450kCancer)
 
 shinyServer(function(input, output, session) {
- 
-observeEvent(input$action, {
-            updateNavbarPage(session, "baseCN", selected = "Description")
+
+# 
+observeEvent(input$FileActionButton, {
+            updateNavbarPage(session, "baseCN", selected = "Plot auto")
         } )
     
 
+ output$autoplot <- renderPlot({
+                     if (is.null(input$file1))
+                       return(NULL)
+                     regions <- input$file1
+                     sampleList <- input$file2
+                     object <- ReadData(regions$datapath, sampleList$datapath)
+                     object <- AutoCorrectPeak(object)
+                     plotRegions(object$regions)
+            
 
+                     })
 
-  output$contents <- renderTable({
+  output$csvtable <- renderTable({
     
     # input$file1 will be NULL initially. After the user selects
     # and uploads a file, it will be a data frame with 'name',
@@ -35,14 +47,11 @@ observeEvent(input$action, {
 				 quote=input$quote,nrows=10)
   })
 
-output$Actionbutton <- renderUI({
-regions <- input$file1
-sampleList <- input$file2
-if (is.null(regions))
-      return(NULL)
-
-
-          actionButton("action", label = "Data Looks OK NEXT")
+   output$Actionbutton <- renderUI({
+             
+       if (is.null(input$file1))
+           return(NULL)
+       actionButton("FileActionButton", label = "Data Looks OK NEXT")
 })
  
 })
