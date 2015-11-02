@@ -3,8 +3,16 @@ library(CopyNumber450kCancer)
 
 shinyServer(function(input, output, session) {
 
-# 
-observeEvent(input$FileActionButton, {
+#Do something on event liks push buttons
+observeEvent(input$RegionsActionButtonGo2Sample, {
+            updateNavbarPage(session, "baseCN", selected = "Upload sample list")
+        } )
+ 
+observeEvent(input$SampleActionButton, {
+            updateNavbarPage(session, "baseCN", selected = "Plot auto")
+        } )
+
+observeEvent(input$RegionsActionButtonGo2PlotRaw, {
             updateNavbarPage(session, "baseCN", selected = "Plot auto")
         } )
     
