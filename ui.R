@@ -25,7 +25,17 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
                                    ),
 
                             checkboxInput('header', 'Header', TRUE),radioButtons('sep', 'Separator',c(Comma=',',Semicolon=';',Tab='\t'),','),
-                            radioButtons('quote', 'Quote',c(None='','Double Quote'='"','Single Quote'="'"),'"')
+                            radioButtons('quote', 'Quote',c(None='','Double Quote'='"','Single Quote'="'"),'"'),
+                            tags$div(tags$p("Select which column is:")
+                                   ),
+                            #c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
+                            selectInput("RegionSample", "Sample:",NULL),
+                            selectInput("RegionChromosome", "Chromosome:",NULL),
+                            selectInput("Regionbpstart", "bp.Start:",NULL),
+                            selectInput("Regionbpend", "bp.End:",NULL),
+                            selectInput("RegionNumMark", "Num.of.Markers:",NULL),
+                            selectInput("RegionMean", "Mean:",NULL)
+
                                   ),
 
                              # Tableoutput of files in mainpanel
@@ -54,7 +64,12 @@ tabPanel("Upload sample list",
                                    ),
 
                             checkboxInput('headersamp', 'Header', TRUE),radioButtons('sepsamp', 'Separator',c(Comma=',',Semicolon=';',Tab='\t'),','),
-                            radioButtons('quotesamp', 'Quote',c(None='','Double Quote'='"','Single Quote'="'"),'"')
+                            radioButtons('quotesamp', 'Quote',c(None='','Double Quote'='"','Single Quote'="'"),'"'),
+                            tags$div(tags$p("Select which column is:")
+                                   ),
+                            selectInput("SampleNumber", "Number:",NULL),
+                            selectInput("SampleSample", "Sample:",NULL),
+                            selectInput("SampleComment", "Comment:",NULL)
                                   ),
 
                              # Tableoutput of files in mainpanel
@@ -67,7 +82,7 @@ tabPanel("Upload sample list",
           
                    
           ),
-  tabPanel("Plot auto",
+  tabPanel("Plot raw",
           fluidPage(
                 titlePanel("Autocorrected plot"),
                          sidebarLayout(
@@ -81,7 +96,7 @@ tabPanel("Upload sample list",
 
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("autoplot")
+      plotOutput("plotraw")
     )
   )
                       

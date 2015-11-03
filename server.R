@@ -9,11 +9,11 @@ observeEvent(input$RegionsActionButtonGo2Sample, {
         } )
  
 observeEvent(input$SampleActionButton, {
-            updateNavbarPage(session, "baseCN", selected = "Plot auto")
+            updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
 
 observeEvent(input$RegionsActionButtonGo2PlotRaw, {
-            updateNavbarPage(session, "baseCN", selected = "Plot auto")
+            updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
     
 
@@ -40,8 +40,17 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
     if (is.null(regions))
       return(NULL)
     
-    read.csv(regions$datapath, header=input$header, sep=input$sep, 
+    RegionInput=read.csv(regions$datapath, header=input$header, sep=input$sep, 
 				 quote=input$quote,nrows=10)
+    RegionVariables=names(RegionInput)
+    updateSelectInput(session, "RegionSample", choices = RegionVariables)
+    updateSelectInput(session, "RegionChromosome", choices = RegionVariables)
+    updateSelectInput(session, "Regionbpstart", choices = RegionVariables)
+    updateSelectInput(session, "Regionbpend", choices = RegionVariables)
+    updateSelectInput(session, "RegionNumMark", choices = RegionVariables)
+    updateSelectInput(session, "RegionMean", choices = RegionVariables)
+    RegionInput
+  
   })
  output$csvtableSample <- renderTable({
     
@@ -54,8 +63,13 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
     if (is.null(sample))
       return(NULL)
     
-    read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp, 
+    SampleInput=read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp, 
 				 quote=input$quotesamp,nrows=10)
+    SampleVariables=names(SampleInput)
+    updateSelectInput(session, "SampleNumber", choices = SampleVariables)
+    updateSelectInput(session, "SampleSample", choices = SampleVariables)
+    updateSelectInput(session, "SampleComment", choices = SampleVariables)
+    SampleInput
   })
 
    output$sampleButtonG2Raw <- renderUI({
