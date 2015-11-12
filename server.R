@@ -206,10 +206,13 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                        return(NULL)
                      
                      regions <- input$file1
-                     sample_list <- input$file2
                      region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
-                     sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
-                     object<<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                     if(!is.null(input$file2)){
+                         sample_list <- input$file2
+		         sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
+                         object<<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                     }
+                     else{object<<-ReadData(session,regions$datapath,region_colnames)}
                      for (i in 1:max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
                           # of i in the renderPlot() will be the same across all instances, because
