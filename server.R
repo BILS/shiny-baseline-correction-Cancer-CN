@@ -176,7 +176,7 @@ PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, commen
     legend("bottomleft", legend="Density",cex=1)
   
     #plot the regions
-    plotRegions(sam,cutoff=cutoff,main=c(paste("Sample ",select,":",object$SL[which(object$SL$Sample %in% as.character(name)),"Sample"]), ...))
+    plotRegions(sam,cutoff=cutoff,markers=markers,main=c(paste("Sample ",select,":",object$SL[which(object$SL$Sample %in% as.character(name)),"Sample"]), ...))
     if (comments){
         legend("topleft", legend=paste("Comment:",object$SL[which(object$SL$Sample %in% as.character(name)),"Comment"]),cex=0.75)
         }
@@ -206,8 +206,10 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                        return(NULL)
                      
                      regions <- input$file1
+                     sample_list <- input$file2
                      region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
-                     object<<-ReadData(session,regions$datapath,region_colnames)
+                     sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
+                     object<<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
                      for (i in 1:max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
                           # of i in the renderPlot() will be the same across all instances, because
@@ -218,7 +220,7 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                               plottitle <- paste("Sampletitle", my_i, sep="")
 
                               output[[plotname]] <- renderPlot({
-                              PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments =input$ShowComments)
+                              PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
                               })
                               output[[plottitle]] <- renderText({paste("1:", my_i, ".  n is ", input$NumberSampleSlider, sep = "")
                               })
@@ -230,7 +232,7 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                          plottitle <- paste("Sampletitle", i, sep="")
                          tags$div(class = "group-output",
                              textOutput(plottitle, container = h3),
-                             plotOutput(plotname, height = 400, width = 600)
+                             plotOutput(plotname, height = 400, width = 900)
                           )
                      
 
