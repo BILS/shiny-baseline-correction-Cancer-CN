@@ -1,5 +1,189 @@
 library(shiny)
-library(CopyNumber450kCancer)
+library(ggplot2) 
+
+#New CopyNumber Functions
+#region_file fileinput path from Shiny
+#regions_colnames colnames vector from shiny input
+#sample_list file input path from Shiny input
+#sample_colnames colnames vector from shiny inputs
+ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_colnames){
+
+    regions<-read.csv(regions_file,stringsAsFactors =FALSE)
+
+    regions<-regions[,regions_colnames]
+    colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
+    max_plots<<-length(unique(regions$Sample))
+    updateSliderInput(session, "NumberSampleSlider", max=max_plots )
+    if(!missing(sample_list)){
+        SL<-read.csv(sample_list,stringsAsFactors =FALSE)
+        SL<-SL[,sample_colnames]
+        colnames(SL)<-c("Number","Sample","Comment")
+        }
+    
+    object <- list(
+        regions = regions,
+        regions_save = regions,
+        regions_auto = regions
+        )
+    class(object) <- "CopyNumber450kCancer_data"
+    if (missing(sample_list)) {
+        Number <- c(1:length(unique(regions$Sample)))
+        Sample <- unique(regions$Sample)
+        Comment <- c(rep(" ",length(unique(regions$Sample))))
+        SL <- data.frame(Number, Sample, Comment, stringsAsFactors = F)
+    }
+    
+    mod<-as.data.frame(SL$Sample,stringsAsFactors =FALSE)  # copy to store the modification in it
+    mod[,2:6]<-0
+    mod[,6]<-"No"
+    mod[is.na(mod)] <- 0
+    colnames(mod)<-c("Sample","Lower_selected_level","Upper_selected_level","Mean_of_selected_regions","Shifting","Reviewed?")
+    object$mod <- mod
+    object$SL <- SL
+      
+    mod_auto<-mod[,c("Sample","Mean_of_selected_regions","Shifting","Reviewed?")]
+    colnames(mod_auto)<-c("Sample","Auto_Maximum_Peak","Shifting","Auto_Corrected?")
+    object$mod_auto <- mod_auto
+  
+    object
+}
+
+#this uses the regions file: Chromosome should be in this format: "chr1"
+#similar to the original function, this one use only the cutoff
+plotRegions<-function(object, chr, start, end, cutoff=0.1,markers=20, ...) {   
+  sample_segments <- object
+  
+  if(hasArg(markers)){
+    sample_segments$Mean[which(sample_segments$Num.of.Markers<=markers)]<-0
+  }
+  
+  segment_values <- as.numeric(sample_segments[,"Mean"])
+  segment_colors <- rep("black", nrow(sample_segments))
+  
+  if (missing(cutoff)) {
+    cutoff<-(0.1)
+  }
+  
+  segment_colors[as.numeric(segment_values) >= cutoff] <- "green"
+  segment_colors[as.numeric(segment_values) <= -cutoff] <- "red"
+  
+  if (missing(chr)) {
+    # Plotting the whole genome
+    chromosomes <- unique(sample_segments[, "Chromosome"])
+    site_per_chr <- cumsum(c(0, sapply(chromosomes, function(chr) max(as.numeric(sample_segments[sample_segments[,"Chromosome"] == chr, "bp.End"])))))
+    offset <- site_per_chr - min(as.numeric(sample_segments[sample_segments[, "Chromosome"] == "chr1", "bp.Start"])) # 1 instead of "chr1" #as.numeric(gsub("\\D", "", x))
+    start <- 0
+    end <- as.numeric(max(site_per_chr))
+    x_axis_type <- "n"
+  } else {
+    # Plotting a region
+    if (missing(start)) {
+      start <- 0
+    }
+    
+    if (missing(end)) {
+      end <- as.numeric(max(sample_segments[sample_segments[, "Chromosome"] == chr, "bp.End"]))
+    }
+    
+    chromosomes <- chr
+    offset <- 0
+    x_axis_type <- NULL
+  }
+  
+  yMin <- (-1) #min(c(-1, as.numeric(sample_segments[significant_segments, "Mean"])))
+  yMax <- 1 #max(c(1, as.numeric(sample_segments[significant_segments, "Mean"])))
+  
+  #if (missing(ylab)) {
+  # ylab<-""
+  #}
+  
+  myPlot <- plot(range(start, end), range(yMin, yMax), type = "n",axes=FALSE, xaxt = x_axis_type, xlab="",ylab="", ...) #ylab="Mean",
+  
+  #---this function to plot the tick on the right side
+  tick.tick<-function (nx = 2, ny = 2, tick.ratio = 0.5) {
+    ax <- function(w, n, tick.ratio) {
+      range <- par("usr")[if (w == "x") 
+        1:2
+        else 3:4]
+      tick.pos <- if (w == "x") 
+        par("xaxp")
+      else par("yaxp")
+      distance.between.minor <- (tick.pos[2] - tick.pos[1])/tick.pos[3]/n
+      possible.minors <- tick.pos[1] - (0:100) * distance.between.minor
+      low.minor <- min(possible.minors[possible.minors >= range[1]])
+      if (is.na(low.minor)) 
+        low.minor <- tick.pos[1]
+      possible.minors <- tick.pos[2] + (0:100) * distance.between.minor
+      hi.minor <- max(possible.minors[possible.minors <= range[2]])
+      if (is.na(hi.minor)) 
+        hi.minor <- tick.pos[2]
+      axis(if (w == "x") 
+        1
+        else 4, seq(low.minor, hi.minor, by = distance.between.minor), 
+        labels = FALSE, tcl = par("tcl") * tick.ratio)
+    }
+    if (nx > 1) 
+      ax("x", nx, tick.ratio = tick.ratio)
+    if (ny > 1) 
+      ax("y", ny, tick.ratio = tick.ratio)
+    invisible()
+  }
+  
+  if (missing(chr)) {
+    xlabs <- sapply(2:length(site_per_chr), function(j) {
+      ((site_per_chr[j] - site_per_chr[j - 1])/2) + site_per_chr[j - 1]
+    })
+    
+    axis(1, at = xlabs, labels = chromosomes, lty = 0, las = 2, ...)
+    axis(4)
+    tick.tick(nx=0,ny=2, tick.ratio=1.6)
+    tick.tick(nx=0,ny=10, tick.ratio=0.6)
+    mtext("L-value", side = 4, line = 2, cex = par("cex.lab"))
+    box()
+    abline(v = site_per_chr, lty = 3)
+    abline(h = c(0,-cutoff,cutoff), lty = 3)
+  }
+  
+  lapply(1:length(chromosomes), function(i) {
+    used_segments <- sample_segments[, "Chromosome"] == chromosomes[i]
+    colors <- segment_colors[used_segments]
+    starts <- as.numeric(sample_segments[used_segments, "bp.Start"]) + offset[i]
+    ends <- as.numeric(sample_segments[used_segments, "bp.End"]) + offset[i]
+    y <- as.numeric(sample_segments[used_segments, "Mean"])
+    graphics::segments(starts, y, ends, y, col = colors, lwd = 2, lty = 1)
+  })
+  
+  myPlot
+}
+
+
+PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...){
+  
+    name <- object$SL[select,"Sample"] # get the sample name
+    sam <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
+  
+    #to prepare the spaces for the plots
+    par(mfrow=c(1,2),mar= c(5.1,0,4.1,0),oma=c(2,0,0,4))
+    layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE) 
+  
+    #calculate the density
+    forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+    d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+    #plot the density
+    plot(d$y,d$x,ylim=c(-1,1),type='l',ylab="",xlab="",axes=FALSE,xlim=rev(range(d$y)))
+    abline(h = c(0,-cutoff,cutoff), lty = 3)
+    box()
+    legend("bottomleft", legend="Density",cex=1)
+  
+    #plot the regions
+    plotRegions(sam,cutoff=cutoff,main=c(paste("Sample ",select,":",object$SL[which(object$SL$Sample %in% as.character(name)),"Sample"]), ...))
+    if (comments){
+        legend("topleft", legend=paste("Comment:",object$SL[which(object$SL$Sample %in% as.character(name)),"Comment"]),cex=0.75)
+        }
+}
+
+
+
 
 shinyServer(function(input, output, session) {
 
@@ -17,17 +201,46 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
         } )
     
 
- output$autoplot <- renderPlot({
+ output$plotraw <- renderUI({
                      if (is.null(input$file1))
                        return(NULL)
+                     
                      regions <- input$file1
-                     sampleList <- input$file2
-                     object <- ReadData(regions$datapath, sampleList$datapath)
-                     object <- AutoCorrectPeak(object)
-                     plotRegions(object$regions)
-            
+                     region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
+                     object<<-ReadData(session,regions$datapath,region_colnames)
+                     for (i in 1:max_plots) {
+                          # Need local so that each item gets its own number. Without it, the value
+                          # of i in the renderPlot() will be the same across all instances, because
+                          # of when the expression is evaluated.
+                          local({
+                              my_i <- i
+                              plotname <- paste("Sample", my_i, sep="")
+                              plottitle <- paste("Sampletitle", my_i, sep="")
+
+                              output[[plotname]] <- renderPlot({
+                              PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments =input$ShowComments)
+                              })
+                              output[[plottitle]] <- renderText({paste("1:", my_i, ".  n is ", input$NumberSampleSlider, sep = "")
+                              })
+                          })
+                      }
+ 
+                     plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
+                         plotname <- paste("Sample", i, sep="")
+                         plottitle <- paste("Sampletitle", i, sep="")
+                         tags$div(class = "group-output",
+                             textOutput(plottitle, container = h3),
+                             plotOutput(plotname, height = 400, width = 600)
+                          )
+                     
 
                      })
+  # Convert the list to a tagList - this is necessary for the list of items
+   # to display properly.
+   do.call(tagList, plot_output_list)
+
+})
+
 
   output$csvtableRegions <- renderTable({
     
@@ -43,12 +256,13 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
     RegionInput=read.csv(regions$datapath, header=input$header, sep=input$sep, 
 				 quote=input$quote,nrows=10)
     RegionVariables=names(RegionInput)
-    updateSelectInput(session, "RegionSample", choices = RegionVariables)
-    updateSelectInput(session, "RegionChromosome", choices = RegionVariables)
-    updateSelectInput(session, "Regionbpstart", choices = RegionVariables)
-    updateSelectInput(session, "Regionbpend", choices = RegionVariables)
-    updateSelectInput(session, "RegionNumMark", choices = RegionVariables)
-    updateSelectInput(session, "RegionMean", choices = RegionVariables)
+    updateSelectInput(session, "RegionSample", choices = RegionVariables, selected="Sample")
+    updateSelectInput(session, "RegionChromosome", choices = RegionVariables, selected="Chromosome")
+    updateSelectInput(session, "Regionbpstart", choices = RegionVariables, selected = "bp.Start")
+    updateSelectInput(session, "Regionbpend", choices = RegionVariables, selected = "bp.End")
+    updateSelectInput(session, "RegionNumMark", choices = RegionVariables, selected = "Num.of.Markers")
+    updateSelectInput(session, "RegionMean", choices = RegionVariables, selected ="Mean")
+    
     RegionInput
   
   })
@@ -76,21 +290,21 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
              
        if (is.null(input$file2))
            return(NULL)
-       actionButton("SampleActionButton", label = "Data Looks OK NEXT plot Raw")
+       actionButton("SampleActionButton", label = "Data looks OK. --> Plot samples?")
        })
 
    output$regionsbuttonsGo2Sample <- renderUI({
              
        if (is.null(input$file1))
            return(NULL)
-       actionButton("RegionsActionButtonGo2Sample", label = "Data looks OK Load Sample?")
+       actionButton("RegionsActionButtonGo2Sample", label = "Data looks OK. --> Load sample sheet?")
        })
 
     output$regionsbuttonsGo2PlotRaw <- renderUI({
              
        if (is.null(input$file1))
            return(NULL)
-       actionButton("RegionsActionButtonGo2PlotRaw", label = "Data looks OK plot Raw?")
+       actionButton("RegionsActionButtonGo2PlotRaw", label = "Data looks OK. --> Plot samples?")
        })
 
 

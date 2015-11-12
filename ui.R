@@ -84,19 +84,36 @@ tabPanel("Upload sample list",
           ),
   tabPanel("Plot raw",
           fluidPage(
-                titlePanel("Autocorrected plot"),
+                titlePanel("Raw plot"),
                          sidebarLayout(
     sidebarPanel(
-      sliderInput("bins",
-                  "Number of bins:",
+      sliderInput("NumberSampleSlider",
+                  "Number of Samples:",
                   min = 1,
-                  max = 50,
-                  value = 30)
+                  max = 5,
+                  value = 1),
+      sliderInput("NumberMarkerSlider",
+                  "Number of Markers:",
+                  min = 0,
+                  max = 100,
+                  value = 20,
+                  step=20),
+#default 20
+      sliderInput("NumberCutoffSlider",
+                  "Cutoff:",
+                  min = 0,
+                  max = 1,
+                  value = 0.1),
+checkboxInput('ShowComments', 'Show Comments?', TRUE)
+
+
+
     ),
 
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("plotraw")
+      uiOutput("plotraw")
+      
     )
   )
                       
