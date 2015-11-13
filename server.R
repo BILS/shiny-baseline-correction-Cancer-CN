@@ -236,7 +236,7 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                          plotcheckbox <- paste("plotcheckbox", i, sep="")
                          tags$div(class = "group-output",
                              uiOutput(plotcheckbox),
-                             plotOutput(plotname, height = 400, width = 900)
+                             plotOutput(plotname)
                           )
                      
 
