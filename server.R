@@ -53,9 +53,9 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
 plotRegions<-function(object, chr, start, end, cutoff=0.1,markers=20, ...) {   
   sample_segments <- object
   
-  if(hasArg(markers)){
-    sample_segments$Mean[which(sample_segments$Num.of.Markers<=markers)]<-0
-  }
+  #if(hasArg(markers)){
+  #  sample_segments$Mean[which(sample_segments$Num.of.Markers<=markers)]<-0
+  #}
   
   segment_values <- as.numeric(sample_segments[,"Mean"])
   segment_colors <- rep("black", nrow(sample_segments))
@@ -161,7 +161,8 @@ PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, commen
   
     name <- object$SL[select,"Sample"] # get the sample name
     sam <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
-  
+    if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
+
     #to prepare the spaces for the plots
     par(mfrow=c(1,2),mar= c(5.1,0,4.1,0),oma=c(2,0,0,4))
     layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE) 
@@ -220,21 +221,21 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                           local({
                               my_i <- i
                               plotname <- paste("Sample", my_i, sep="")
-                              plottitle <- paste("Sampletitle", my_i, sep="")
+                              plotcheckbox <- paste("plotcheckbox", my_i, sep="")
 
                               output[[plotname]] <- renderPlot({
                               PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
                               })
-                              output[[plottitle]] <- renderText({paste("1:", my_i, ".  n is ", input$NumberSampleSlider, sep = "")
+                              output[[plotcheckbox]] <- renderUI({checkboxInput(paste("PlotRawSamplecheckbox", my_i, sep=""),paste("Select Sample", my_i, sep="") , FALSE)
                               })
                           })
                       }
  
                      plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
                          plotname <- paste("Sample", i, sep="")
-                         plottitle <- paste("Sampletitle", i, sep="")
+                         plotcheckbox <- paste("plotcheckbox", i, sep="")
                          tags$div(class = "group-output",
-                             textOutput(plottitle, container = h3),
+                             uiOutput(plotcheckbox),
                              plotOutput(plotname, height = 400, width = 900)
                           )
                      
