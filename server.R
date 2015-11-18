@@ -286,9 +286,9 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
     SampleInput=read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp, 
 				 quote=input$quotesamp,nrows=10)
     SampleVariables=names(SampleInput)
-    updateSelectInput(session, "SampleNumber", choices = SampleVariables, selected=grep("number|sample([:blank:]|[:punct:])number", SampleVariables, value=TRUE))
+    updateSelectInput(session, "SampleNumber", choices = SampleVariables, selected=grep("number|sample([:blank:]|[:punct:])number", SampleVariables, value=TRUE,ignore.case =TRUE))
     updateSelectInput(session, "SampleSample", choices = SampleVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",SampleVariables , value=TRUE,ignore.case =TRUE))
-    updateSelectInput(session, "SampleComment", choices = SampleVariables, selected=grep("comment", SampleVariables, value=TRUE))
+    updateSelectInput(session, "SampleComment", choices = SampleVariables, selected=grep("comment", SampleVariables, value=TRUE,ignore.case =TRUE))
     SampleInput
   })
 
