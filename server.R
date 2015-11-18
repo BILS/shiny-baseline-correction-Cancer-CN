@@ -164,7 +164,7 @@ PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, commen
     if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
 
     #to prepare the spaces for the plots
-    par(mfrow=c(1,2),mar= c(5.1,0,4.1,0),oma=c(2,0,0,4))
+    par(mfrow=c(1,2),mar=c(0,0,2,0),oma=c(0,0,0,4))
     layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE) 
   
     #calculate the density
@@ -262,12 +262,12 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
     RegionInput=read.csv(regions$datapath, header=input$header, sep=input$sep, 
 				 quote=input$quote,nrows=10)
     RegionVariables=names(RegionInput)
-    updateSelectInput(session, "RegionSample", choices = RegionVariables, selected="Sample")
-    updateSelectInput(session, "RegionChromosome", choices = RegionVariables, selected="Chromosome")
-    updateSelectInput(session, "Regionbpstart", choices = RegionVariables, selected = "bp.Start")
-    updateSelectInput(session, "Regionbpend", choices = RegionVariables, selected = "bp.End")
-    updateSelectInput(session, "RegionNumMark", choices = RegionVariables, selected = "Num.of.Markers")
-    updateSelectInput(session, "RegionMean", choices = RegionVariables, selected ="Mean")
+    updateSelectInput(session, "RegionSample", choices = RegionVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",RegionVariables , value=TRUE,ignore.case =TRUE))
+    updateSelectInput(session, "RegionChromosome", choices = RegionVariables, selected=grep("chromosome|chr|chromo",RegionVariables , value=TRUE,ignore.case =TRUE))
+    updateSelectInput(session, "Regionbpstart", choices = RegionVariables, selected=grep("bp([:blank:]|[:punct:])start|start|chromStart|from,",RegionVariables , value=TRUE,ignore.case =TRUE))
+    updateSelectInput(session, "Regionbpend", choices = RegionVariables, selected=grep("bp([:blank:]|[:punct:])End|ends|end|chromoEnd|to",RegionVariables , value=TRUE,ignore.case =TRUE))
+    updateSelectInput(session, "RegionNumMark", choices = RegionVariables, selected=grep("Num([:blank:]|[:punct:])of([:blank:]|[:punct:])Markers|markers|probes| number([:blank:]|[:punct:])of([:blank:]|[:punct:])probes|number([:blank:]|[:punct:])of([:blank:]|[:punct:])markers",RegionVariables , value=TRUE,ignore.case =TRUE))
+    updateSelectInput(session, "RegionMean", choices = RegionVariables, selected=grep("Mean|log|value|meanlog|L-value",RegionVariables , value=TRUE,ignore.case =TRUE))
     
     RegionInput
   
@@ -286,9 +286,9 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
     SampleInput=read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp, 
 				 quote=input$quotesamp,nrows=10)
     SampleVariables=names(SampleInput)
-    updateSelectInput(session, "SampleNumber", choices = SampleVariables)
-    updateSelectInput(session, "SampleSample", choices = SampleVariables)
-    updateSelectInput(session, "SampleComment", choices = SampleVariables)
+    updateSelectInput(session, "SampleNumber", choices = SampleVariables, selected=grep("number|sample([:blank:]|[:punct:])number", SampleVariables, value=TRUE))
+    updateSelectInput(session, "SampleSample", choices = SampleVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",SampleVariables , value=TRUE,ignore.case =TRUE))
+    updateSelectInput(session, "SampleComment", choices = SampleVariables, selected=grep("comment", SampleVariables, value=TRUE))
     SampleInput
   })
 
@@ -313,6 +313,13 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
        actionButton("RegionsActionButtonGo2PlotRaw", label = "Data looks OK. --> Plot samples?")
        })
 
+output$LoadDataButtons<- renderUI({
+tagList(
+tags$p(actionButton("LoadSampleData", label = "Load Sample Data")),
+tags$p(actionButton("UpLoadData", label = "Upload Data")),
+actionButton("LoadFromCancerAtlasData", label = "Browse and load Data from Cancer Atlas")
+)
+})
 
  
 })
