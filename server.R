@@ -200,6 +200,17 @@ observeEvent(input$SampleActionButton, {
 observeEvent(input$RegionsActionButtonGo2PlotRaw, {
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
+observeEvent(input$SelectAllSamples, {
+            for (i in 1:max_plots) {
+                                   if(input$SelectAllSamples){
+                                   updateCheckboxInput(session, paste("PlotRawSamplecheckbox", i, sep=""), value =TRUE)
+				   }
+                                   else {
+                                        updateCheckboxInput(session, paste("PlotRawSamplecheckbox", i, sep=""), value=FALSE)
+}						
+                                   }
+            
+        } )
     
 
  output$plotraw <- renderUI({
@@ -230,7 +241,7 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                               })
                           })
                       }
- 
+                     plot_output_list1 <- tagList(checkboxInput("SelectAllSamples", label = "Select all Samples"))
                      plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
                          plotname <- paste("Sample", i, sep="")
                          plotcheckbox <- paste("plotcheckbox", i, sep="")
@@ -243,7 +254,7 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
                      })
   # Convert the list to a tagList - this is necessary for the list of items
    # to display properly.
-   do.call(tagList, plot_output_list)
+   append(plot_output_list1,do.call(tagList, plot_output_list))
 
 })
 
