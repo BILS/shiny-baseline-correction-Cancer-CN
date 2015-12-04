@@ -239,7 +239,7 @@ observeEvent(input$SelectAllSamples, {
                       cat("\n")
                       cat(plotname)
                          cat("\n")
-                      output[[plotslider]] <- renderUI({sliderInput(paste("correctplotSlider", my_corr, sep=""),max=10, min=1)})
+                      output[[plotslider]] <- renderUI({sliderInput(paste("correctplotSlider", my_corr, sep=""),"Correct baseline",max=10, min=1,value=1)})
                       output[[plotname]] <- renderPlot({
                               PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
                               })  
@@ -261,9 +261,11 @@ observeEvent(input$SelectAllSamples, {
          cat(is.factor(NumbCorrectedPlots))
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
-                         
+                         plotslider <- paste("plotslider", s, sep="")
+                          tags$div(class = "group-output",
+                          uiOutput(plotslider),
                           plotOutput(plotname)
-
+                          )
                          
                           })
                          cat("\n Efter apply")
