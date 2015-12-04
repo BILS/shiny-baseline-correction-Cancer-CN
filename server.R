@@ -235,9 +235,11 @@ observeEvent(input$SelectAllSamples, {
                       
                       cat(NumbCorrectedPlots)
                       plotname <- paste("SampleCorrect", my_corr, sep="")
+                      plotslider <- paste("plotslider", my_corr, sep="")
                       cat("\n")
                       cat(plotname)
                          cat("\n")
+                      output[[plotslider]] <- renderUI({sliderInput(paste("correctplotSlider", my_corr, sep=""),max=10, min=1)})
                       output[[plotname]] <- renderPlot({
                               PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
                               })  
@@ -257,7 +259,6 @@ observeEvent(input$SelectAllSamples, {
          
          cat("\n")
          cat(is.factor(NumbCorrectedPlots))
-        plot_output_list1 <- tagList(checkboxInput("SelectAllSamples", label = "Select all Samples"))
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
                          
@@ -267,7 +268,7 @@ observeEvent(input$SelectAllSamples, {
                           })
                          cat("\n Efter apply")
                          cat(is.null(plot_output_list_corr))
-append(plot_output_list1,do.call(tagList, plot_output_list_corr))
+do.call(tagList, plot_output_list_corr)
 }
          })
 
