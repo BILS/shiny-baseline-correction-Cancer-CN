@@ -13,7 +13,7 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
     regions<-regions[,regions_colnames]
     colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
     max_plots<<-length(unique(regions$Sample))
-    updateSliderInput(session, "NumberSampleSlider", max=max_plots )
+    updateSliderInput(session, "NumberSampleSlider", max=max_plots, min=1,step=1 )
     if(!missing(sample_list)){
         SL<-read.csv(sample_list,stringsAsFactors =FALSE)
         SL<-SL[,sample_colnames]
@@ -44,6 +44,7 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
     mod_auto<-mod[,c("Sample","Mean_of_selected_regions","Shifting","Reviewed?")]
     colnames(mod_auto)<-c("Sample","Auto_Maximum_Peak","Shifting","Auto_Corrected?")
     object$mod_auto <- mod_auto
+
   
     object
 }
@@ -188,6 +189,8 @@ PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, commen
 
 shinyServer(function(input, output, session) {
 
+
+
 #Do something on event liks push buttons
 observeEvent(input$RegionsActionButtonGo2Sample, {
             updateNavbarPage(session, "baseCN", selected = "Upload sample list")
@@ -211,7 +214,63 @@ observeEvent(input$SelectAllSamples, {
                                    }
             
         } )
-    
+    output$autocorrection <- renderUI({
+         NumbCorrectedPlots<-0
+         cat("\n inputsampleSlider: ")
+         cat(input$NumberSampleSlider) 
+         
+         cat("\n")
+         for (i in 1:input$NumberSampleSlider) {
+                  local({
+                      my_i <- i
+                      cat("\nThis is I: ")
+                      cat(i)
+                      cat("\n This is my_I: ")
+                      cat(my_i)
+                      cat("\n")
+                      if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
+                      
+                      NumbCorrectedPlots<<-NumbCorrectedPlots+1
+                      my_corr <-NumbCorrectedPlots
+                      
+                      cat(NumbCorrectedPlots)
+                      plotname <- paste("SampleCorrect", my_corr, sep="")
+                      cat("\n")
+                      cat(plotname)
+                         cat("\n")
+                      output[[plotname]] <- renderPlot({
+                              PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+                              })  
+
+                      }
+                  })
+         } 
+         cat("\n Number corrplots after loop: ")  
+         cat(NumbCorrectedPlots)
+         if (NumbCorrectedPlots==0){
+                       
+                       tags$div(tags$p("Please select at Least one sample"))
+                       
+                         
+                            }	
+         else{
+         
+         cat("\n")
+         cat(is.factor(NumbCorrectedPlots))
+        plot_output_list1 <- tagList(checkboxInput("SelectAllSamples", label = "Select all Samples"))
+         plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
+                         plotname <- paste("SampleCorrect", s, sep="")
+                         
+                          plotOutput(plotname)
+
+                         
+                          })
+                         cat("\n Efter apply")
+                         cat(is.null(plot_output_list_corr))
+append(plot_output_list1,do.call(tagList, plot_output_list_corr))
+}
+         })
+
 
  output$plotraw <- renderUI({
                      if (is.null(input$file1))
@@ -241,8 +300,7 @@ observeEvent(input$SelectAllSamples, {
                               })
                           })
                       }
-                     plot_output_list1 <- tagList(checkboxInput("SelectAllSamples", label = "Select all Samples"))
-                     plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
+                         plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
                          plotname <- paste("Sample", i, sep="")
                          plotcheckbox <- paste("plotcheckbox", i, sep="")
                          tags$div(class = "group-output",
@@ -254,7 +312,7 @@ observeEvent(input$SelectAllSamples, {
                      })
   # Convert the list to a tagList - this is necessary for the list of items
    # to display properly.
-   append(plot_output_list1,do.call(tagList, plot_output_list))
+   do.call(tagList, plot_output_list)
 
 })
 
@@ -322,6 +380,11 @@ observeEvent(input$SelectAllSamples, {
        if (is.null(input$file1))
            return(NULL)
        actionButton("RegionsActionButtonGo2PlotRaw", label = "Data looks OK. --> Plot samples?")
+       })
+
+    output$plotbuttonsGo2Correct <- renderUI({
+             
+              actionButton("PlotActionButtonGo2Autocorrect", label = "Go to Auto correct")
        })
 
 output$LoadDataButtons<- renderUI({

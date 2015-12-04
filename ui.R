@@ -89,9 +89,11 @@ tabPanel("Upload sample list",
     sidebarPanel(
       sliderInput("NumberSampleSlider",
                   "Number of Samples:",
-                  min = 1,
-                  max = 5,
-                  value = 1),
+                  min=0,
+                  max=0,
+                  value=1,
+                  ticks=FALSE
+                 ),
       sliderInput("NumberMarkerSlider",
                   "Number of Markers:",
                   min = 0,
@@ -104,7 +106,8 @@ tabPanel("Upload sample list",
                   min = 0,
                   max = 1,
                   value = 0.1),
-checkboxInput('ShowComments', 'Show Comments?', TRUE)
+checkboxInput('ShowComments', 'Show Comments?', TRUE),
+uiOutput('plotbuttonsGo2Correct')
 
 
 
@@ -121,10 +124,11 @@ checkboxInput('ShowComments', 'Show Comments?', TRUE)
           
          
           ),
-  tabPanel("Table",
+  tabPanel("AutoCorrection",
             fluidPage(
-                titlePanel("Table"),
-                HTML("Table")
+                titlePanel("AutoCorrection"),
+                uiOutput("autocorrection")
+
           
                     )
           )
