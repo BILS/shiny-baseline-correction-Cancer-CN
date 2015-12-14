@@ -215,6 +215,8 @@ observeEvent(input$SelectAllSamples, {
             
         } )
     output$autocorrection <- renderUI({
+	if (is.null(input$file1))
+                       return(NULL)
          NumbCorrectedPlots<-0
          cat("\n inputsampleSlider: ")
          cat(input$NumberSampleSlider) 
@@ -263,6 +265,7 @@ observeEvent(input$SelectAllSamples, {
                          plotname <- paste("SampleCorrect", s, sep="")
                          plotslider <- paste("plotslider", s, sep="")
                           tags$div(class = "group-output",
+                        tags$head(tags$style(HTML('input[type=js-range-slider] {writing-mode: bt-lr;-webkit-appearance: slider-vertical; /* WebKit */    width: 8px; height: 175px;  padding: 0 5px; }'))),
                           uiOutput(plotslider),
                           plotOutput(plotname)
                           )
@@ -303,6 +306,7 @@ do.call(tagList, plot_output_list_corr)
                               })
                           })
                       }
+                         plot_output_list1 <- tagList(checkboxInput("SelectAllSamples", label = "Select all Samples"))
                          plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
                          plotname <- paste("Sample", i, sep="")
                          plotcheckbox <- paste("plotcheckbox", i, sep="")
@@ -315,7 +319,7 @@ do.call(tagList, plot_output_list_corr)
                      })
   # Convert the list to a tagList - this is necessary for the list of items
    # to display properly.
-   do.call(tagList, plot_output_list)
+   append(plot_output_list1,do.call(tagList, plot_output_list))
 
 })
 

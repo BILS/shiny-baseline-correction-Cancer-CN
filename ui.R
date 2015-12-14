@@ -126,8 +126,30 @@ uiOutput('plotbuttonsGo2Correct')
           ),
   tabPanel("AutoCorrection",
             fluidPage(
-                titlePanel("AutoCorrection"),
-                uiOutput("autocorrection")
+      titlePanel("AutoCorrection"),         
+fluidRow(
+    column(12,
+      "Corrections options:",
+      checkboxInput('AutoAllSamp', 'Autocorrect all samples', FALSE),
+      checkboxInput('AutoSelSamp', 'Autocorrect selected samples', FALSE),
+      checkboxInput('RePlotRaw', 'Replot the raw plots', FALSE),
+      checkboxInput('SavePlotsCN', 'Save plots and copy number data', FALSE),
+      
+      fluidRow(
+        column(6,
+          "Fluid 6väns",
+          fluidRow(	
+            column(6, 
+              "Fluid 6"),
+            column(6,
+              "Fluid 6")
+          )
+        ),
+        column(width = 6,
+          "Fluid 6h")
+      )
+    )
+  )
 
           
                     )
