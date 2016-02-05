@@ -195,6 +195,14 @@ shinyServer(function(input, output, session) {
 observeEvent(input$RegionsActionButtonGo2Sample, {
             updateNavbarPage(session, "baseCN", selected = "Upload sample list")
         } )
+
+
+observeEvent(input$LoadSampleData, {
+            regions <<- "DATA/regions.csv"
+            sample_list <<- "DATA/sample_list.csv"
+            
+            updateNavbarPage(session, "baseCN", selected = "Plot raw")
+        } )
  
 observeEvent(input$SampleActionButton, {
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
@@ -264,10 +272,21 @@ observeEvent(input$SelectAllSamples, {
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
                          plotslider <- paste("plotslider", s, sep="")
-                          tags$div(class = "group-output",
-                        tags$head(tags$style(HTML('input[type=js-range-slider] {writing-mode: bt-lr;-webkit-appearance: slider-vertical; /* WebKit */    width: 8px; height: 175px;  padding: 0 5px; }'))),
-                          uiOutput(plotslider),
-                          plotOutput(plotname)
+tags$div(class = "group-output",  
+output$code <- renderUI({   
+     }),                          
+        
+          uiOutput(plotslider),
+output$code <- renderUI({   
+  }),     
+ 
+          plotOutput(plotname),
+    output$code <- renderUI({   
+  })    
+                          #
+                        
+                          
+                          
                           )
                          
                           })
@@ -279,17 +298,25 @@ do.call(tagList, plot_output_list_corr)
 
 
  output$plotraw <- renderUI({
-                     if (is.null(input$file1))
-                       return(NULL)
-                     
-                     regions <- input$file1
-                     region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
-                     if(!is.null(input$file2)){
-                         sample_list <- input$file2
-		         sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
-                         object<<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
-                     }
-                     else{object<<-ReadData(session,regions$datapath,region_colnames)}
+                     if (is.null(input$file1) && is.null(regions)){return(NULL)}
+                        
+                     if(is.null(regions)){
+                     	regions <- input$file1
+                     	region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
+                                        
+                     	if(!is.null(input$file2)){
+                        	 sample_list <- input$file2
+		       	  sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
+                       	  object<<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                     	  }
+                          else
+                          	{
+				object<<-ReadData(session,regions$datapath,region_colnames)
+				}
+                      }
+                      else {
+                           object<<-ReadData(session,regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),sample_list,c("Number","Sample","Comment"))
+  			   }
                      for (i in 1:max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
                           # of i in the renderPlot() will be the same across all instances, because
