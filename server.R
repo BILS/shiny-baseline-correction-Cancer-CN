@@ -1,5 +1,6 @@
 library(shiny)
 library(ggplot2) 
+shiny.maxRequestSize=90*1024^2
 
 #New CopyNumber Functions
 #region_file fileinput path from Shiny
