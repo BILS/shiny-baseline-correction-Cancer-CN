@@ -1,6 +1,6 @@
 library(shiny)
 library(ggplot2) 
-shiny.maxRequestSize=90*1024^2
+options(shiny.maxRequestSize=50*1024^2) 
 
 #New CopyNumber Functions
 #region_file fileinput path from Shiny
@@ -184,6 +184,52 @@ PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, commen
         legend("topleft", legend=paste("Comment:",object$SL[which(object$SL$Sample %in% as.character(name)),"Comment"]),cex=0.75)
         }
 }
+
+#The Auto correction based on the highest peak-------------------
+#this function correct the mean of the regions based on the highest peak and plot them
+AutoCorrectPeak<-function(object, cutoff=0.1,markers=20, ...){
+  
+  if (missing(markers)) {markers<-(0)}
+  
+  #prepare the QC file
+  QC<-object$SL[,1:2]
+  QC[,3:7]<-0
+  colnames(QC) <- c("Sample","Comment","peak.sharpness","number.of.regions","IQR","SD","MAPD")
+  
+  
+  
+  for (i in 1:length(object$SL[,"Sample"])){ #correction
+  
+    
+    sam <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(object$SL[i,"Sample"])),]
+    forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+    
+    sam.original<-sam
+    
+    d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+    max.peak.value<-d$x[which.max(d$y)]
+    sam$Mean <- sam$Mean-max.peak.value
+    
+    #QC (peak sharpness) + (count the regions)
+    point<-which(d$x==(max.peak.value))  #for peak sharpness
+    QC.peak.sharpness <- ((d$y[point+20]+d$y[point-20])/2)/d$y[which(d$x==max.peak.value)]
+    QC[i,"peak.sharpness"] <- as.numeric(QC.peak.sharpness)
+    QC[i,"number.of.regions"]  <- length(sam[,1]) # for number of the regions
+    
+    QC[i,"IQR"]<-IQR(forDen[,"Mean"], na.rm = TRUE, type = 7) #for IQR
+    QC[i,"SD"]<-sd(forDen[,"Mean"], na.rm = TRUE) #for SD
+    QC[i,"MAPD"]<- median(abs(diff(forDen[,"Mean"],na.rm = TRUE)), na.rm = TRUE)# for Median Absolute Pairwise Difference (MAPD)
+    
+    object$regions_auto[which(object$regions_auto$Sample %in% as.character(object$SL[i,"Sample"])),"Mean"]<-sam$Mean #store the modifications
+    object$mod_auto[which(object$mod_auto$Sample %in% as.character(object$SL[i,"Sample"])),2:4]<-c(round(max.peak.value, 3),round(-max.peak.value, 3),"Auto") 
+  }
+  
+  #added for the new version
+  object$regions<-object$regions_auto
+  
+  object
+}
+
 
 
 
