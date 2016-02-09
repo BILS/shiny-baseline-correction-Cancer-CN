@@ -33,22 +33,63 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
         Comment <- c(rep(" ",length(unique(regions$Sample))))
         SL <- data.frame(Number, Sample, Comment, stringsAsFactors = F)
     }
-    
-    mod<-as.data.frame(SL$Sample,stringsAsFactors =FALSE)  # copy to store the modification in it
-    mod[,2:6]<-0
-    mod[,6]<-"No"
-    mod[is.na(mod)] <- 0
-    colnames(mod)<-c("Sample","Lower_selected_level","Upper_selected_level","Mean_of_selected_regions","Shifting","Reviewed?")
-    object$mod <- mod
-    object$SL <- SL
-      
-    mod_auto<-mod[,c("Sample","Mean_of_selected_regions","Shifting","Reviewed?")]
-    colnames(mod_auto)<-c("Sample","Auto_Maximum_Peak","Shifting","Auto_Corrected?")
-    object$mod_auto <- mod_auto
+     
+   mod<-as.data.frame(SL$Sample,stringsAsFactors =FALSE)  # copy to store the modification in it
+   mod[,2:3]<-0
+   mod[,3]<-"No"
+   mod[is.na(mod)] <- 0
+   colnames(mod)<-c("Sample","Shifting","Using_slider")
 
+   #store the sample list in the object
+object$SL <- SL
+
+# copy to store the autocorrection modification in it
+object$mod_auto <- data.frame("Sample" = object$SL$Sample,"Auto_Maximum_Peak"= 0,"Shifting"=0,"Auto_Corrected"="No",stringsAsFactors =FALSE)
+
+# copy to store the manual modification in it
+object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider"="No", stringsAsFactors =FALSE)  
   
     object
 }
+
+#NEW PLOT MODIFICATION 
+Plot.Manual<-function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, slider_value=0,...){
+  
+  name <- object$SL[select,"Sample"] # get the sample name
+  sam <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(name)),]   #get the sample segments
+  if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
+  
+  #modify by the value from the slider
+  sam$Mean <- sam$Mean + slider_value 
+  
+  #to prepare the spaces for the plots
+  par(mfrow=c(1,2),mar=c(0,0,2,0),oma=c(0,0,0,4))
+  layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE) 
+  
+  #calculate the density
+  forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+  d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+  #plot the density
+  plot(d$y,d$x,ylim=c(-1,1),type='l',ylab="",xlab="",axes=FALSE,xlim=rev(range(d$y)))
+  abline(h = c(0,-cutoff,cutoff), lty = 3)
+  box()
+  legend("bottomleft", legend="Density",cex=1)
+  
+  #plot the regions
+  plotRegions(sam,cutoff=cutoff,markers=markers,main=c(paste("Sample ",select,":",object$SL[which(object$SL$Sample %in% as.character(name)),"Sample"]), ...))
+  if (comments){
+    legend("topleft", legend=paste("Comment:",object$SL[which(object$SL$Sample %in% as.character(name)),"Comment"]),cex=0.75)
+  }
+  
+  #save the modifications
+  object$mod[which(object$mod$Sample %in% as.character(name)), 2:3] <- c(slider_value, "Yes_using_slider")
+  
+  #save the new Means in object$regions
+  object$regions[which(object$regions$Sample %in% as.character(name)), "Mean"] <- sam$Mean
+  
+  invisible(object)
+}
+
 
 #this uses the regions file: Chromosome should be in this format: "chr1"
 #similar to the original function, this one use only the cutoff
