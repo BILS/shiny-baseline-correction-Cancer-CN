@@ -231,6 +231,32 @@ AutoCorrectPeak<-function(object, cutoff=0.1,markers=20, ...){
 }
 
 
+PlotAutoCorrect<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...){
+      
+    name <- object$SL[select,"Sample"] # get the sample name
+    sam <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
+    if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
+
+    #to prepare the spaces for the plots
+    par(mfrow=c(1,2),mar=c(0,0,2,0),oma=c(0,0,0,4))
+    layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE) 
+  
+    #calculate the density
+    forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+    d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+    #plot the density
+    plot(d$y,d$x,ylim=c(-1,1),type='l',ylab="",xlab="",axes=FALSE,xlim=rev(range(d$y)))
+    abline(h = c(0,-cutoff,cutoff), lty = 3)
+    box()
+    legend("bottomleft", legend="Density",cex=1)
+  
+    #plot the regions
+    plotRegions(sam,cutoff=cutoff,markers=markers,main=c(paste("Sample ",select,":",object$SL[which(object$SL$Sample %in% as.character(name)),"Sample"]), ...))
+    if (comments){
+        legend("topleft", legend=paste("Comment:",object$SL[which(object$SL$Sample %in% as.character(name)),"Comment"]),cex=0.75)
+        }
+}
+
 
 
 
@@ -270,13 +296,10 @@ observeEvent(input$SelectAllSamples, {
             
         } )
     output$autocorrection <- renderUI({
-	if (is.null(input$file1))
-                       return(NULL)
+	if (is.null(input$file1) && is.null(regions)){return(NULL)}
+         object<-AutoCorrectPeak(object)
          NumbCorrectedPlots<-0
-         cat("\n inputsampleSlider: ")
-         cat(input$NumberSampleSlider) 
          
-         cat("\n")
          for (i in 1:input$NumberSampleSlider) {
                   local({
                       my_i <- i
@@ -298,7 +321,8 @@ observeEvent(input$SelectAllSamples, {
                          cat("\n")
                       output[[plotslider]] <- renderUI({sliderInput(paste("correctplotSlider", my_corr, sep=""),"Correct baseline",max=10, min=1,value=1)})
                       output[[plotname]] <- renderPlot({
-                              PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+                              
+                              PlotAutoCorrect(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
                               })  
 
                       }
