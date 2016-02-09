@@ -1,6 +1,6 @@
 library(shiny)
 library(ggplot2) 
-options(shiny.maxRequestSize=50*1024^2) 
+options(shiny.maxRequestSize=50*1024^2,shiny.error=recover,error=traceback) 
 
 #New CopyNumber Functions
 #region_file fileinput path from Shiny
@@ -34,11 +34,6 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
         SL <- data.frame(Number, Sample, Comment, stringsAsFactors = F)
     }
      
-   mod<-as.data.frame(SL$Sample,stringsAsFactors =FALSE)  # copy to store the modification in it
-   mod[,2:3]<-0
-   mod[,3]<-"No"
-   mod[is.na(mod)] <- 0
-   colnames(mod)<-c("Sample","Shifting","Using_slider")
 
    #store the sample list in the object
 object$SL <- SL
@@ -356,14 +351,14 @@ observeEvent(input$SelectAllSamples, {
                       
                       cat(NumbCorrectedPlots)
                       plotname <- paste("SampleCorrect", my_corr, sep="")
-                      plotslider <- paste("plotslider", my_corr, sep="")
+                      plotslider <- paste("correctplotSlider", my_corr, sep="")
                       cat("\n")
                       cat(plotname)
                          cat("\n")
-                      output[[plotslider]] <- renderUI({sliderInput(paste("correctplotSlider", my_corr, sep=""),"Correct baseline",max=10, min=1,value=1)})
+                      output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=1,value=1)})
                       output[[plotname]] <- renderPlot({
                               
-                              PlotAutoCorrect(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+                              Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input$plotslider)
                               })  
 
                       }
