@@ -339,22 +339,16 @@ observeEvent(input$SelectAllSamples, {
          for (i in 1:input$NumberSampleSlider) {
                   local({
                       my_i <- i
-                      cat("\nThis is I: ")
-                      cat(i)
-                      cat("\n This is my_I: ")
-                      cat(my_i)
-                      cat("\n")
+                     
                       if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
                       
                       NumbCorrectedPlots<<-NumbCorrectedPlots+1
                       my_corr <-NumbCorrectedPlots
                       
-                      cat(NumbCorrectedPlots)
+                     
                       plotname <- paste("SampleCorrect", my_corr, sep="")
                       plotslider <- paste("correctplotSlider", my_corr, sep="")
-                      cat("\n")
-                      cat(plotname)
-                         cat("\n")
+                     
                       output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=1,value=1)})
                       output[[plotname]] <- renderPlot({
                               
@@ -364,8 +358,7 @@ observeEvent(input$SelectAllSamples, {
                       }
                   })
          } 
-         cat("\n Number corrplots after loop: ")  
-         cat(NumbCorrectedPlots)
+         
          if (NumbCorrectedPlots==0){
                        
                        tags$div(tags$p("Please select at Least one sample"))
@@ -374,8 +367,7 @@ observeEvent(input$SelectAllSamples, {
                             }	
          else{
          
-         cat("\n")
-         cat(is.factor(NumbCorrectedPlots))
+         
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
                          plotslider <- paste("plotslider", s, sep="")
