@@ -52,7 +52,7 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
 Plot.Manual<-function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, slider_value=0,...){
   name <- object$SL[select,"Sample"] # get the sample name
   sam <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(name)),]   #get the sample segments
-  original.sam <- sam  #add this line before the next line
+  original.sam <- sam  	
   if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
 
 
@@ -352,7 +352,7 @@ observeEvent(input$SelectAllSamples, {
                       plotname <- paste("SampleCorrect", my_corr, sep="")
                       plotslider <- paste("correctplotSlider", my_corr, sep="")
                      
-                      output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=0,value=0)})
+                      output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=2, min=-2,value=0,step=0.01)})
                       output[[plotname]] <- renderPlot({
                               if(!is.null(input[[plotslider]]))
 				{
