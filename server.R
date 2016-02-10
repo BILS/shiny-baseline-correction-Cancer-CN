@@ -356,9 +356,9 @@ observeEvent(input$SelectAllSamples, {
                       output[[plotname]] <- renderPlot({
                               if(!is.null(input[[plotslider]]))
 				{
-                              Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
+                              Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
 				}
-else { Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
+else { Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
 
                               })  
 
