@@ -49,11 +49,13 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
 
 #NEW PLOT MODIFICATION 
 Plot.Manual<-function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, slider_value=0,...){
-  
+cat("Slider val\n")  
+cat(slider_value)
   name <- object$SL[select,"Sample"] # get the sample name
   sam <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(name)),]   #get the sample segments
   if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
-  
+
+cat(sam$Mean)  
   #modify by the value from the slider
   sam$Mean <- sam$Mean + slider_value 
   
@@ -349,10 +351,14 @@ observeEvent(input$SelectAllSamples, {
                       plotname <- paste("SampleCorrect", my_corr, sep="")
                       plotslider <- paste("correctplotSlider", my_corr, sep="")
                      
-                      output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=1,value=1)})
+                      output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=0,value=0)})
                       output[[plotname]] <- renderPlot({
-                              
-                              Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input$plotslider)
+                              if(FALSE)
+				{
+                              Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
+				}
+else { Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
+
                               })  
 
                       }
@@ -370,7 +376,7 @@ observeEvent(input$SelectAllSamples, {
          
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
-                         plotslider <- paste("plotslider", s, sep="")
+                         plotslider <- paste("correctplotSlider", s, sep="")
 tags$div(class = "group-output",  
 output$code <- renderUI({   
      }),                          
@@ -389,8 +395,7 @@ output$code <- renderUI({
                           )
                          
                           })
-                         cat("\n Efter apply")
-                         cat(is.null(plot_output_list_corr))
+                         
 do.call(tagList, plot_output_list_corr)
 }
          })
