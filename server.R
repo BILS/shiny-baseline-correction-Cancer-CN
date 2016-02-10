@@ -354,7 +354,7 @@ observeEvent(input$SelectAllSamples, {
                      
                       output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=0,value=0)})
                       output[[plotname]] <- renderPlot({
-                              if(input[[plotslider]])
+                              if(!is.null(input[[plotslider]]))
 				{
                               Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
 				}
