@@ -1,6 +1,7 @@
 library(shiny)
 library(ggplot2) 
-options(shiny.maxRequestSize=50*1024^2,shiny.error=recover,error=traceback) 
+options(shiny.maxRequestSize=50*1024^2)
+#,shiny.error=recover,error=traceback) 
 
 #New CopyNumber Functions
 #region_file fileinput path from Shiny
@@ -49,13 +50,12 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
 
 #NEW PLOT MODIFICATION 
 Plot.Manual<-function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, slider_value=0,...){
-cat("Slider val\n")  
-cat(slider_value)
   name <- object$SL[select,"Sample"] # get the sample name
   sam <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(name)),]   #get the sample segments
+  original.sam <- sam  #add this line before the next line
   if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
 
-cat(sam$Mean)  
+
   #modify by the value from the slider
   sam$Mean <- sam$Mean + slider_value 
   
@@ -82,7 +82,8 @@ cat(sam$Mean)
   object$mod[which(object$mod$Sample %in% as.character(name)), 2:3] <- c(slider_value, "Yes_using_slider")
   
   #save the new Means in object$regions
-  object$regions[which(object$regions$Sample %in% as.character(name)), "Mean"] <- sam$Mean
+  object$regions[which(object$regions$Sample %in% as.character(name)), "Mean"] <- original.sam$Mean + slider_value
+  #object$regions[which(object$regions$Sample %in% as.character(name)), "Mean"] <- sam$Mean
   
   invisible(object)
 }
@@ -353,7 +354,7 @@ observeEvent(input$SelectAllSamples, {
                      
                       output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=10, min=0,value=0)})
                       output[[plotname]] <- renderPlot({
-                              if(FALSE)
+                              if(input[[plotslider]])
 				{
                               Plot.Manual(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
 				}
