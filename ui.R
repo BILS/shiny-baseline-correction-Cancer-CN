@@ -127,25 +127,20 @@ uiOutput('plotbuttonsGo2Correct')
   tabPanel("AutoCorrection",
             fluidPage(
       titlePanel("AutoCorrection"),         
-fluidRow(
-    column(12,
-      "Corrections options:",
-      checkboxInput('AutoAllSamp', 'Autocorrect all samples', FALSE),
-      checkboxInput('AutoSelSamp', 'Autocorrect selected samples', FALSE),
-      checkboxInput('RePlotRaw', 'Replot the raw plots', FALSE),
-      checkboxInput('SavePlotsCN', 'Save plots and copy number data', FALSE),
+wellPanel(fluidRow(
+    column(2,downloadButton("downloadPlot", "Download Plot(s)")),
+    column(2,downloadButton("downloadRegions", "Download Regions CSV")),
+    column(3,downloadButton("downloadManual", "Download manual corrections CSV")),
+    column(2,downloadButton("downloadQC", "Download QC"))
 
-      fluidRow(
-      column(12,
-      "Samples:",
-checkboxInput('testSample', 'TestSample12', FALSE)
 )),
-
-     
+fluidRow(
+     column(12,
 uiOutput("autocorrection")
+))
 
-    )
-  )
+    
+  
 
           
                     )

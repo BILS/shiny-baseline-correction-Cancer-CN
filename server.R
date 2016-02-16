@@ -334,6 +334,23 @@ observeEvent(input$SelectAllSamples, {
                                    }
             
         } )
+
+output$downloadRegions <- downloadHandler(
+    filename = function() { paste("reviewed_regions", '.csv', sep='') },
+    content = function(file) {
+   write.csv(object$regions,file)   
+  
+    }
+  )
+output$downloadManual <- downloadHandler(
+    filename = function() { paste("Manual_corrections", '.csv', sep='') },
+    content = function(file) {
+   write.csv(object$mod,file)   
+  
+    }
+  )
+
+
     output$autocorrection <- renderUI({
 	if (is.null(input$file1) && is.null(regions)){return(NULL)}
          object<-AutoCorrectPeak(object)
@@ -352,7 +369,7 @@ observeEvent(input$SelectAllSamples, {
                       plotname <- paste("SampleCorrect", my_corr, sep="")
                       plotslider <- paste("correctplotSlider", my_corr, sep="")
                      
-                      output[[plotslider]] <- renderUI({sliderInput(plotslider,"Correct baseline",max=2, min=-2,value=0,step=0.01)})
+                      output[[plotslider]] <- renderUI({sliderInput(plotslider,paste("Correct baseline Sample:", my_corr, sep=""),max=2, min=-2,width='800px',value=0,step=0.01)})
                       output[[plotname]] <- renderPlot({
                               if(!is.null(input[[plotslider]]))
 				{
@@ -378,22 +395,23 @@ else { Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=i
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
                          plotslider <- paste("correctplotSlider", s, sep="")
-tags$div(class = "group-output",  
+tags$div(class = "group-output",wellPanel(  
 output$code <- renderUI({   
-     }),                          
+     }),  
+plotOutput(plotname),                        
         
-          uiOutput(plotslider),
+          uiOutput(plotslider,align = "center"),
 output$code <- renderUI({   
   }),     
- 
-          plotOutput(plotname),
+# tags$hr(),
+          
     output$code <- renderUI({   
   })    
                           #
                         
                           
                           
-                          )
+                          ))
                          
                           })
                          
