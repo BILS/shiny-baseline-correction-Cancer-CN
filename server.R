@@ -1,6 +1,15 @@
 library(shiny)
-library(ggplot2) 
 options(shiny.maxRequestSize=50*1024^2)
+
+
+
+
+
+
+shinyServer(function(input, output, session) {
+
+regions<-NULL
+object<-NULL
 #,shiny.error=recover,error=traceback) 
 
 #New CopyNumber Functions
@@ -79,8 +88,10 @@ Plot.Manual<-function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, 
   }
   
   #save the modifications
-  object$mod[which(object$mod$Sample %in% as.character(name)), 2:3] <- c(slider_value, "Yes_using_slider")
-  
+   if(slider_value!=0){object$mod[which(object$mod$Sample %in% as.character(name)), 2:3] <- c(slider_value, "Yes")}
+ 
+
+
   #save the new Means in object$regions
   object$regions[which(object$regions$Sample %in% as.character(name)), "Mean"] <- original.sam$Mean + slider_value
   #object$regions[which(object$regions$Sample %in% as.character(name)), "Mean"] <- sam$Mean
@@ -297,12 +308,6 @@ PlotAutoCorrect<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, co
 }
 
 
-
-
-shinyServer(function(input, output, session) {
-
-
-
 #Do something on event liks push buttons
 observeEvent(input$RegionsActionButtonGo2Sample, {
             updateNavbarPage(session, "baseCN", selected = "Upload sample list")
@@ -310,8 +315,8 @@ observeEvent(input$RegionsActionButtonGo2Sample, {
 
 
 observeEvent(input$LoadSampleData, {
-            regions <<- "DATA/regions.csv"
-            sample_list <<- "DATA/sample_list.csv"
+           regions <<- "DATA/regions.csv"
+           sample_list <<- "DATA/sample_list.csv"
             
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
@@ -335,25 +340,12 @@ observeEvent(input$SelectAllSamples, {
             
         } )
 
-output$downloadRegions <- downloadHandler(
-    filename = function() { paste("reviewed_regions", '.csv', sep='') },
-    content = function(file) {
-   write.csv(object$regions,file)   
-  
-    }
-  )
-output$downloadManual <- downloadHandler(
-    filename = function() { paste("Manual_corrections", '.csv', sep='') },
-    content = function(file) {
-   write.csv(object$mod,file)   
-  
-    }
-  )
+
 
 
     output$autocorrection <- renderUI({
-	if (is.null(input$file1) && is.null(regions)){return(NULL)}
-         object<-AutoCorrectPeak(object)
+	if (is.null(input$file1) && is.null(regions)){return(tags$b("DEG"))}
+         object<<-AutoCorrectPeak(object)
          NumbCorrectedPlots<-0
          
          for (i in 1:input$NumberSampleSlider) {
@@ -362,19 +354,23 @@ output$downloadManual <- downloadHandler(
                      
                       if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
                       
-                      NumbCorrectedPlots<<-NumbCorrectedPlots+1
+                      NumbCorrectedPlots<-NumbCorrectedPlots+1
                       my_corr <-NumbCorrectedPlots
                       
                      
                       plotname <- paste("SampleCorrect", my_corr, sep="")
                       plotslider <- paste("correctplotSlider", my_corr, sep="")
                      
-                      output[[plotslider]] <- renderUI({sliderInput(plotslider,paste("Correct baseline Sample:", my_corr, sep=""),max=2, min=-2,width='800px',value=0,step=0.01)})
+                      output[[plotslider]] <- renderUI({sliderInput(plotslider,paste("Correct baseline: ",my_i, sep=""),max=2, min=-2,width='800px',value=0,step=0.01)})
                       output[[plotname]] <- renderPlot({
                               if(!is.null(input[[plotslider]]))
 				{
-                              Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
-				}
+                              object<-Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
+				 cat(object$mod[1,2])
+ 	
+  cat(object$mod[1,3])
+  cat("\n")
+                                 }
 else { Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
 
                               })  
@@ -419,9 +415,43 @@ do.call(tagList, plot_output_list_corr)
 }
          })
 
+output$downloadRegions <- downloadHandler(
+    filename = function() { paste("reviewed_regions", '.csv', sep='') },
+    content = function(file) {
+   write.csv(object$regions,file)   
+  
+    }
+  )
+output$downloadPlot <- downloadHandler(
+    filename = 'plots.zip',
+    content = function(fname) {
+      tmpdir <- tempdir()
+      setwd(tempdir())
+      print(tempdir())
+         
+      fs <- c("plot1.png")
+      
+      print (fs)
+      
+      png(filename="plot1.png")
+      PlotRawData(object, select=1, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+      dev.off()
+     zip(zipfile=fname, files=fs)
+    },
+    contentType = "application/zip"
+    )
 
+
+
+output$downloadManual <- downloadHandler(
+    filename = function() { paste("Manual_corrections", '.csv', sep='') },
+    content = function(file) {
+   write.csv(object$mod,file)   
+  
+    }
+  )
  output$plotraw <- renderUI({
-                     if (is.null(input$file1) && is.null(regions)){return(NULL)}
+                     if (is.null(input$file1) && is.null(regions)){return(tags$b("DEG"))}
                         
                      if(is.null(regions)){
                      	regions <- input$file1
@@ -430,15 +460,15 @@ do.call(tagList, plot_output_list_corr)
                      	if(!is.null(input$file2)){
                         	 sample_list <- input$file2
 		       	  sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
-                       	  object<<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                       	  object<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
                      	  }
                           else
                           	{
-				object<<-ReadData(session,regions$datapath,region_colnames)
+				object<-ReadData(session,regions$datapath,region_colnames)
 				}
                       }
                       else {
-                           object<<-ReadData(session,regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),sample_list,c("Number","Sample","Comment"))
+                           object<-ReadData(session,regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),sample_list,c("Number","Sample","Comment"))
   			   }
                      for (i in 1:max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
@@ -552,5 +582,16 @@ actionButton("LoadFromCancerAtlasData", label = "Browse and load Data from Cance
 )
 })
 
+   output$downloadButtons<- renderUI({
+
+tagList(
+   column(2,downloadButton("downloadPlot", "Download Plot(s)")),
+   column(2,downloadButton("downloadRegions", "Download Regions CSV")),
+   column(3,downloadButton("downloadManual", "Download manual corrections CSV")),
+   column(2,downloadButton("downloadQC", "Download QC"))
+)
+
+
+})
  
 })

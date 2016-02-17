@@ -128,11 +128,7 @@ uiOutput('plotbuttonsGo2Correct')
             fluidPage(
       titlePanel("AutoCorrection"),         
 wellPanel(fluidRow(
-    column(2,downloadButton("downloadPlot", "Download Plot(s)")),
-    column(2,downloadButton("downloadRegions", "Download Regions CSV")),
-    column(3,downloadButton("downloadManual", "Download manual corrections CSV")),
-    column(2,downloadButton("downloadQC", "Download QC"))
-
+uiOutput("downloadButtons")
 )),
 fluidRow(
      column(12,
