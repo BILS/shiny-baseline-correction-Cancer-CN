@@ -316,6 +316,11 @@ observeEvent(input$RegionsActionButtonGo2Sample, {
         } )
 
 
+
+observeEvent(input$PlotActionButtonGo2Autocorrect, {
+            updateNavbarPage(session, "baseCN", selected = "AutoCorrection")
+        } )
+
 observeEvent(input$LoadSampleData, {
            reactive$regions <- "DATA/regions.csv"
            reactive$sample_list <- "DATA/sample_list.csv"
