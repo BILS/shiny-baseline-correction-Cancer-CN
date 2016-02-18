@@ -25,8 +25,8 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
 
     regions<-regions[,regions_colnames]
     colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
-    max_plots<-length(unique(regions$Sample))
-    updateSliderInput(session, "NumberSampleSlider", max=max_plots, min=1,step=1 )
+    senv$max_plots<-length(unique(regions$Sample))
+    updateSliderInput(session, "NumberSampleSlider", max=senv$max_plots, min=1,step=1 )
     if(!missing(sample_list)){
         SL<-read.csv(sample_list,stringsAsFactors =FALSE)
         SL<-SL[,sample_colnames]
@@ -340,7 +340,7 @@ observeEvent(input$RegionsActionButtonGo2PlotRaw, {
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
 observeEvent(input$SelectAllSamples, {
-            for (i in 1:max_plots) {
+            for (i in 1:senv$max_plots) {
                                    if(input$SelectAllSamples){
                                    updateCheckboxInput(session, paste("PlotRawSamplecheckbox", i, sep=""), value =TRUE)
 				   }
@@ -497,7 +497,7 @@ output$downloadManual <- downloadHandler(
                       else {
                            senv$object<-ReadData(session,reactive$regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),reactive$sample_list,c("Number","Sample","Comment"))
   			   }
-                     for (i in 1:max_plots) {
+                     for (i in 1:senv$max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
                           # of i in the renderPlot() will be the same across all instances, because
                           # of when the expression is evaluated.
