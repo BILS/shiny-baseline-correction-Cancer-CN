@@ -326,6 +326,11 @@ observeEvent(input$SampleActionButton, {
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
 
+observeEvent(input$UpLoadData, {
+            updateNavbarPage(session, "baseCN", selected = "Upload region")
+        } )
+
+
 observeEvent(input$RegionsActionButtonGo2PlotRaw, {
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
