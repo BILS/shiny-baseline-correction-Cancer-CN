@@ -1,15 +1,17 @@
 library(shiny)
 options(shiny.maxRequestSize=50*1024^2)
 
-
+`%then%` <- shiny:::`%OR%`
 
 
 
 
 shinyServer(function(input, output, session) {
 
-regions<-NULL
-object<-NULL
+reactive<-reactiveValues()
+senv<-new.env()
+senv$object<-NULL
+
 #,shiny.error=recover,error=traceback) 
 
 #New CopyNumber Functions
@@ -23,7 +25,7 @@ ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_co
 
     regions<-regions[,regions_colnames]
     colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
-    max_plots<<-length(unique(regions$Sample))
+    max_plots<-length(unique(regions$Sample))
     updateSliderInput(session, "NumberSampleSlider", max=max_plots, min=1,step=1 )
     if(!missing(sample_list)){
         SL<-read.csv(sample_list,stringsAsFactors =FALSE)
@@ -315,10 +317,9 @@ observeEvent(input$RegionsActionButtonGo2Sample, {
 
 
 observeEvent(input$LoadSampleData, {
-           regions <<- "DATA/regions.csv"
-           sample_list <<- "DATA/sample_list.csv"
-            
-            updateNavbarPage(session, "baseCN", selected = "Plot raw")
+           reactive$regions <- "DATA/regions.csv"
+           reactive$sample_list <- "DATA/sample_list.csv"
+           updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
  
 observeEvent(input$SampleActionButton, {
@@ -344,12 +345,12 @@ observeEvent(input$SelectAllSamples, {
 
 
     output$autocorrection <- renderUI({
-	if (is.null(input$file1) && is.null(regions)){return(tags$b("DEG"))}
-         object<<-AutoCorrectPeak(object)
+	if (is.null(input$file1) && is.null(reactive$regions)){return(tags$b("DEG"))}
+         senv$object<-AutoCorrectPeak(senv$object)
          NumbCorrectedPlots<-0
          
          for (i in 1:input$NumberSampleSlider) {
-                  local({
+                  NumbCorrectedPlots <-local({
                       my_i <- i
                      
                       if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
@@ -365,18 +366,15 @@ observeEvent(input$SelectAllSamples, {
                       output[[plotname]] <- renderPlot({
                               if(!is.null(input[[plotslider]]))
 				{
-                              object<-Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
-				 cat(object$mod[1,2])
- 	
-  cat(object$mod[1,3])
-  cat("\n")
+                              senv$object<-Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
+				 
                                  }
-else { Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
+else { Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
 
                               })  
 
                       }
-                  })
+                 return(NumbCorrectedPlots) })
          } 
          
          if (NumbCorrectedPlots==0){
@@ -386,7 +384,7 @@ else { Plot.Manual(object, select=my_i,cutoff=input$NumberCutoffSlider,markers=i
                          
                             }	
          else{
-         
+         cat("IN NUMBER")
          
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
@@ -418,7 +416,7 @@ do.call(tagList, plot_output_list_corr)
 output$downloadRegions <- downloadHandler(
     filename = function() { paste("reviewed_regions", '.csv', sep='') },
     content = function(file) {
-   write.csv(object$regions,file)   
+   write.csv(senv$object$regions,file)   
   
     }
   )
@@ -428,15 +426,27 @@ output$downloadPlot <- downloadHandler(
       tmpdir <- tempdir()
       setwd(tempdir())
       print(tempdir())
-         
-      fs <- c("plot1.png")
+      SelPlots<-0
       
-      print (fs)
-      
-      png(filename="plot1.png")
-      PlotRawData(object, select=1, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
-      dev.off()
-     zip(zipfile=fname, files=fs)
+         for (i in 1:input$NumberSampleSlider) {
+             
+                    my_i <- i
+                    if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
+                       SelPlots<-SelPlots+1
+                       plotname<-paste("Sample",my_i,".png",sep="")
+                       cat(plotname)
+                       if(SelPlots==1){fs<-c(plotname)}
+                          else {fs<-append(fs,plotname)}
+                       png(filename=plotname)
+                       PlotRawData(senv$object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+                       dev.off()
+                       
+                       }
+                   }
+    cat(fs)
+    print (fs) 
+    
+    zip(zipfile=fname, files=fs)
     },
     contentType = "application/zip"
     )
@@ -446,29 +456,36 @@ output$downloadPlot <- downloadHandler(
 output$downloadManual <- downloadHandler(
     filename = function() { paste("Manual_corrections", '.csv', sep='') },
     content = function(file) {
-   write.csv(object$mod,file)   
+   write.csv(senv$object$mod,file)   
   
     }
   )
  output$plotraw <- renderUI({
-                     if (is.null(input$file1) && is.null(regions)){return(tags$b("DEG"))}
-                        
-                     if(is.null(regions)){
+                     cat("fistel")
+                     validate(
+                            need(!is.null(reactive$regions), paste("Please upload data or try te sample data regions is NULL",reactive$regions))
+                            
+                            )
+                     if (is.null(input$file1) && is.null(reactive$regions)){tags$b("file input is null, Regions is NULL")}
+                      else{
+                        tags$b("in First else")
+                     if(is.null(reactive$regions)){
+                         tags$b("Regions is NULL") 
                      	regions <- input$file1
                      	region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
                                         
                      	if(!is.null(input$file2)){
                         	 sample_list <- input$file2
 		       	  sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
-                       	  object<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                       	  senv$object<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
                      	  }
                           else
                           	{
-				object<-ReadData(session,regions$datapath,region_colnames)
+				senv$object<-ReadData(session,regions$datapath,region_colnames)
 				}
                       }
                       else {
-                           object<-ReadData(session,regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),sample_list,c("Number","Sample","Comment"))
+                           senv$object<-ReadData(session,reactive$regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),reactive$sample_list,c("Number","Sample","Comment"))
   			   }
                      for (i in 1:max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
@@ -480,7 +497,7 @@ output$downloadManual <- downloadHandler(
                               plotcheckbox <- paste("plotcheckbox", my_i, sep="")
 
                               output[[plotname]] <- renderPlot({
-                              PlotRawData(object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+                              PlotRawData(senv$object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
                               })
                               output[[plotcheckbox]] <- renderUI({checkboxInput(paste("PlotRawSamplecheckbox", my_i, sep=""),paste("Select Sample", my_i, sep="") , FALSE)
                               })
@@ -501,7 +518,7 @@ output$downloadManual <- downloadHandler(
    # to display properly.
    append(plot_output_list1,do.call(tagList, plot_output_list))
 
-})
+}})
 
 
   output$csvtableRegions <- renderTable({
