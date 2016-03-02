@@ -82,6 +82,18 @@ tabPanel("Upload sample list",
           
                    
           ),
+  tabPanel("TCGA",
+            fluidPage(
+      titlePanel("TCGA"),
+	sidebarLayout(
+                sidebarPanel(
+		uiOutput('tcga')),
+ mainPanel(tableOutput('tableTCGA') )
+)
+
+
+)
+          ),
   tabPanel("Plot raw",
           fluidPage(
                 titlePanel("Raw plot"),
@@ -133,12 +145,7 @@ uiOutput("downloadButtons")
 fluidRow(
      column(12,
 uiOutput("autocorrection")
-))
-
-    
-  
-
-          
+))          
                     )
           )
 ))

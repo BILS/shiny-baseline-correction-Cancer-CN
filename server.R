@@ -1,4 +1,5 @@
 library(shiny)
+library("RTCGA.CNV")
 options(shiny.maxRequestSize=50*1024^2)
 
 `%then%` <- shiny:::`%OR%`
@@ -394,7 +395,7 @@ else { Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,mark
                          
                             }	
          else{
-         cat("IN NUMBER")
+         
          
          plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                          plotname <- paste("SampleCorrect", s, sep="")
@@ -444,7 +445,7 @@ output$downloadPlot <- downloadHandler(
                     if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
                        SelPlots<-SelPlots+1
                        plotname<-paste("Sample",my_i,".png",sep="")
-                       cat(plotname)
+                       
                        if(SelPlots==1){fs<-c(plotname)}
                           else {fs<-append(fs,plotname)}
                        png(filename=plotname)
@@ -453,7 +454,7 @@ output$downloadPlot <- downloadHandler(
                        
                        }
                    }
-    cat(fs)
+    
     print (fs) 
     
     zip(zipfile=fname, files=fs)
@@ -470,8 +471,25 @@ output$downloadManual <- downloadHandler(
   
     }
   )
+
+output$tcga <- renderUI({
+data.cancer <- data(package = "RTCGA.CNV")$results[,"Item"]
+
+
+selectInput("cancerdata", "Data package", c("Choose one" = "", data.cancer ))
+
+})
+
+ output$tableTCGA <- renderTable({
+if (is.null(input$cancerdata))
+      return(NULL)
+if (input$cancerdata!="")
+head(get(input$cancerdata))
+
+})
+
  output$plotraw <- renderUI({
-                     cat("fistel")
+                    
                      validate(
                             need(!is.null(reactive$regions), paste("Please upload data or try te sample data regions is NULL",reactive$regions))
                             
