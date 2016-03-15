@@ -87,7 +87,9 @@ tabPanel("Upload sample list",
       titlePanel("TCGA"),
 	sidebarLayout(
                 sidebarPanel(
-		uiOutput('tcga')),
+		uiOutput('tcga'),
+                uiOutput('tcgaSamplenumber')               ),
+		
  mainPanel(tableOutput('tableTCGA') )
 )
 

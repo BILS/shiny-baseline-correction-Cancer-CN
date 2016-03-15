@@ -60,6 +60,42 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
     object
 }
 
+
+tcgaToObject<-function(session,tcganame){
+
+    regions<-get(tcganame)
+
+    
+    colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")	
+    senv$max_plots<-length(unique(regions$Sample))
+    updateSliderInput(session, "NumberSampleSlider", max=senv$max_plots, min=1,step=1 )
+    
+    object <- list(
+        regions = regions,
+        regions_save = regions,
+        regions_auto = regions
+        )
+    class(object) <- "CopyNumber450kCancer_data"
+    
+        Number <- c(1:length(unique(regions$Sample)))
+        Sample <- unique(regions$Sample)
+        Comment <- c(rep(" ",length(unique(regions$Sample))))
+        SL <- data.frame(Number, Sample, Comment, stringsAsFactors = F)
+    
+     
+
+   #store the sample list in the object
+object$SL <- SL
+
+# copy to store the autocorrection modification in it
+object$mod_auto <- data.frame("Sample" = object$SL$Sample,"Auto_Maximum_Peak"= 0,"Shifting"=0,"Auto_Corrected"="No",stringsAsFactors =FALSE)
+
+# copy to store the manual modification in it
+object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider"="No", stringsAsFactors =FALSE)  
+  
+    object
+}
+
 #NEW PLOT MODIFICATION 
 Plot.Manual<-function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, slider_value=0,...){
   name <- object$SL[select,"Sample"] # get the sample name
@@ -211,6 +247,22 @@ plotRegions<-function(object, chr, start, end, cutoff=0.1,markers=20, ...) {
   myPlot
 }
 
+
+replaceChr<-function(object){
+  
+  chromosome1 <- c(  "chr1",    "chr2",    "chr3",    "chr4",    "chr5",    "chr6",    "chr7",    "chr8",    
+                     "chr9",    "chr10",    "chr11",    "chr12",    "chr13",    "chr14",    "chr15",    
+                     "chr16",    "chr17",    "chr18",    "chr19",    "chr20",    "chr21",    "chr22",    "chrX",    "chrY"    )
+  
+  chromosome2 <- c(    1,    2,    3,    4,    5,    6,    7,    8,    9,    10,    11,    12,    13,    14,    15,    16,    17,    
+                    18,    19,    20,    21,    22,    "X",    "Y"    )	
+  
+  for (i in 1:24){
+    object$Chromosome[object$Chromosome==chromosome2[i]] <- chromosome1[i]
+  }
+  
+  invisible(object)
+}
 
 PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...){
   
@@ -475,11 +527,18 @@ output$downloadManual <- downloadHandler(
 output$tcga <- renderUI({
 data.cancer <- data(package = "RTCGA.CNV")$results[,"Item"]
 
-
-selectInput("cancerdata", "Data package", c("Choose one" = "", data.cancer ))
-
+selectInput("cancerdata", "Data package", c(data.cancer ))
 })
 
+
+output$tcgaSamplenumber <- renderUI({
+if (is.null(input$cancerdata))
+      return(NULL)
+if (input$cancerdata!="")
+
+tags$p(paste("Number of Sample in dataset: ",nrow(unique(get(input$cancerdata)[1]))))
+
+})
  output$tableTCGA <- renderTable({
 if (is.null(input$cancerdata))
       return(NULL)
@@ -490,31 +549,13 @@ head(get(input$cancerdata))
 
  output$plotraw <- renderUI({
                     
-                     validate(
-                            need(!is.null(reactive$regions), paste("Please upload data or try te sample data regions is NULL",reactive$regions))
-                            
-                            )
-                     if (is.null(input$file1) && is.null(reactive$regions)){tags$b("file input is null, Regions is NULL")}
+                   
+                     if (is.null(input$cancerdata)){tags$b("tcga is null")}
                       else{
-                        tags$b("in First else")
-                     if(is.null(reactive$regions)){
-                         tags$b("Regions is NULL") 
-                     	regions <- input$file1
-                     	region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
-                                        
-                     	if(!is.null(input$file2)){
-                        	 sample_list <- input$file2
-		       	  sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
-                       	  senv$object<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
-                     	  }
-                          else
-                          	{
-				senv$object<-ReadData(session,regions$datapath,region_colnames)
-				}
-                      }
-                      else {
-                           senv$object<-ReadData(session,reactive$regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),reactive$sample_list,c("Number","Sample","Comment"))
-  			   }
+                     
+                      senv$object<-tcgaToObject(session,input$cancerdata)
+		      senv$object$regions<-replaceChr(senv$object$regions)
+                    
                      for (i in 1:senv$max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
                           # of i in the renderPlot() will be the same across all instances, because
