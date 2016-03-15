@@ -63,7 +63,7 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
 
 tcgaToObject<-function(session,tcganame){
 
-    regions<-get(tcganame)
+    regions<-replaceChr(get(tcganame))
 
     
     colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")	
@@ -408,7 +408,10 @@ observeEvent(input$SelectAllSamples, {
 
 
     output$autocorrection <- renderUI({
-	if (is.null(input$file1) && is.null(reactive$regions)){return(tags$b("DEG"))}
+
+
+         if (is.null(input$cancerdata)){tags$b("tcga is null")}
+        # print(head(senv$object$regions))
          senv$object<-AutoCorrectPeak(senv$object)
          NumbCorrectedPlots<-0
          
@@ -554,7 +557,7 @@ head(get(input$cancerdata))
                       else{
                      
                       senv$object<-tcgaToObject(session,input$cancerdata)
-		      senv$object$regions<-replaceChr(senv$object$regions)
+		      
                     
                      for (i in 1:senv$max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
