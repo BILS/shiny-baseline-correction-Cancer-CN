@@ -61,6 +61,71 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
     object
 }
 
+# QC function from Nour
+QC.function <- function(object, cutoff=0.1, markers=0, ...) {
+  
+  #function to calculate the area under the curve
+  auc <- function (x, y, thresh = NULL, dens = 100, sort.x = TRUE) {
+    x <- x[!is.na(x)]
+    y <- y[!is.na(x)]
+    x <- x[!is.na(y)]
+    y <- y[!is.na(y)]
+    if (sort.x) {
+      ord <- order(x)
+      x <- x[ord]
+      y <- y[ord]
+    }
+    idx = 2:length(x)
+    x <- as.vector(apply(cbind(x[idx - 1], x[idx]), 1, function(x) seq(x[1], 
+                                                                       x[2], length.out = dens)))
+    y <- as.vector(apply(cbind(y[idx - 1], y[idx]), 1, function(x) seq(x[1], 
+                                                                       x[2], length.out = dens)))
+    if (!is.null(thresh)) {
+      y.0 <- y <= thresh
+      y[y.0] <- thresh
+    }
+    idx = 2:length(x)
+    integral <- as.double((x[idx] - x[idx - 1]) %*% (y[idx] + 
+                                                       y[idx - 1]))/2
+    integral
+  }
+
+  QC <- object$SL[, 1:2]
+  QC[, 3:10] <- 0
+  colnames(QC) <- c("Sample", "Comment", "peak.sharpness", 
+                    "number.of.regions", "IQR", "SD", "MAPD","Area.between.cutoffs","Density.height.at.lower.cutoff","Density.height.at.upper.cutoff")
+  
+for (i in 1:length(object$SL[, "Sample"])) {
+  
+  sam <- object$regions[which(object$regions$Sample %in% as.character(object$SL[i, "Sample"])), ]
+  
+  forDen <- sam[which(sam$Chromosome != "chrX" & sam$Chromosome != "chrY"), c("Num.of.Markers", "Mean")]
+  d <- density(forDen$Mean, weights = forDen$Num.of.Markers/sum(forDen$Num.of.Markers), 
+               na.rm = TRUE, kernel = c("gaussian"), adjust = 0.15, n = 1024,from = -1,to=1)
+  
+  max.peak.value <- d$x[which.max(d$y)]
+  point <- which(d$x == (max.peak.value))
+  QC.peak.sharpness <- ((d$y[point + 20] + d$y[point - 20])/2)/d$y[which(d$x == max.peak.value)]
+  
+  QC[i, "peak.sharpness"] <- as.numeric(QC.peak.sharpness)
+  QC[i, "number.of.regions"] <- length(sam[, 1])
+  QC[i, "IQR"] <- IQR(forDen[, "Mean"], na.rm = TRUE, type = 7)
+  QC[i, "SD"] <- sd(forDen[, "Mean"], na.rm = TRUE)
+  QC[i, "MAPD"] <- median(abs(diff(forDen[, "Mean"], na.rm = TRUE)), na.rm = TRUE)
+  QC[i, "Area.between.cutoffs"] <- (1- (auc(d$x[d$x>(cutoff)], d$y[d$x>(cutoff)]) + auc(d$x[d$x<(-cutoff)], d$y[d$x<(-cutoff)])))
+  QC[i, "Density.height.at.lower.cutoff"] <- d$y[which.min(abs(d$x-(-cutoff)))]
+  QC[i, "Density.height.at.upper.cutoff"] <- d$y[which.min(abs(d$x-cutoff))]
+}
+
+object$QC <- QC
+invisible(object)
+}
+
+#the usage:
+#the user selects cutoff and markers
+#object <- QC.function(....)
+
+
 
 #Function to store the TCGA dataset in the regions of the object
 #Also translates the chromosome names
@@ -498,6 +563,8 @@ output$downloadRegions <- downloadHandler(
     }
   )
 
+
+
 # Output for download
 # Creates and downloadHandler and plots
 output$downloadPlot <- downloadHandler(
@@ -537,6 +604,17 @@ output$downloadManual <- downloadHandler(
     filename = function() { paste("Manual_corrections", '.csv', sep='') },
     content = function(file) {
    write.csv(senv$object$mod,file)   
+  
+    }
+  )
+
+output$downloadQC <- downloadHandler(
+     
+     filename = function() { paste("QC", '.csv', sep='') },
+    
+    content = function(file) {
+   senv$object<-QC.function(senv$object)
+   write.csv(senv$object$QC,file)   
   
     }
   )
