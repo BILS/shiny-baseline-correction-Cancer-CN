@@ -12,7 +12,8 @@ shinyServer(function(input, output, session) {
 reactive<-reactiveValues()
 senv<-new.env()
 senv$object<-NULL
-
+reactive$data_type<-""
+reactive$do.plot<-FALSE
 #,shiny.error=recover,error=traceback) 
 
 #New CopyNumber Functions
@@ -22,7 +23,7 @@ senv$object<-NULL
 #sample_colnames colnames vector from shiny inputs
 ReadData<-function(session,regions_file, regions_colnames, sample_list,sample_colnames){
 
-    regions<-read.csv(regions_file,stringsAsFactors =FALSE)
+    regions<-replaceChr(read.csv(regions_file,stringsAsFactors =FALSE))
 
     regions<-regions[,regions_colnames]
     colnames(regions)<-c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
@@ -61,8 +62,12 @@ object$mod <- data.frame("Sample" = object$SL$Sample, "Shifting"=0,"Using_slider
 }
 
 
+#Function to store the TCGA dataset in the regions of the object
+#Also translates the chromosome names
 tcgaToObject<-function(session,tcganame){
-
+    reactive$data_type<-"tcga"
+    cat("data_type is: ")
+    cat(senv$data_type)
     regions<-replaceChr(get(tcganame))
 
     
@@ -363,11 +368,11 @@ PlotAutoCorrect<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, co
 }
 
 
-#Do something on event liks push buttons
+#Observers for pushbuttons.
+#Watch buttons and update views etc.
 observeEvent(input$RegionsActionButtonGo2Sample, {
             updateNavbarPage(session, "baseCN", selected = "Upload sample list")
         } )
-
 
 
 observeEvent(input$PlotActionButtonGo2Autocorrect, {
@@ -377,11 +382,17 @@ observeEvent(input$PlotActionButtonGo2Autocorrect, {
 observeEvent(input$LoadSampleData, {
            reactive$regions <- "DATA/regions.csv"
            reactive$sample_list <- "DATA/sample_list.csv"
+           reactive$data_type<-"sampledata"
            updateNavbarPage(session, "baseCN", selected = "Plot raw")
         } )
  
 observeEvent(input$SampleActionButton, {
             updateNavbarPage(session, "baseCN", selected = "Plot raw")
+        } )
+
+
+observeEvent(input$LoadFromCancerAtlasData, {
+            updateNavbarPage(session, "baseCN", selected = "TCGA")
         } )
 
 observeEvent(input$UpLoadData, {
@@ -407,7 +418,7 @@ observeEvent(input$SelectAllSamples, {
 
 
 
-    output$autocorrection <- renderUI({
+output$autocorrection <- renderUI({
 
 
          if (is.null(input$cancerdata)){tags$b("tcga is null")}
@@ -486,6 +497,9 @@ output$downloadRegions <- downloadHandler(
   
     }
   )
+
+# Output for download
+# Creates and downloadHandler and plots
 output$downloadPlot <- downloadHandler(
     filename = 'plots.zip',
     content = function(fname) {
@@ -527,22 +541,27 @@ output$downloadManual <- downloadHandler(
     }
   )
 
+#Select output from RTCGA.CNV package
+#Filling the select input from the results Item collumn. 
 output$tcga <- renderUI({
 data.cancer <- data(package = "RTCGA.CNV")$results[,"Item"]
-
 selectInput("cancerdata", "Data package", c(data.cancer ))
+
 })
 
 
+#Output how many samples there is in the dataset. 
 output$tcgaSamplenumber <- renderUI({
 if (is.null(input$cancerdata))
       return(NULL)
-if (input$cancerdata!="")
-
+if (input$cancerdata!=""){
+senv$object<-tcgaToObject(session,input$cancerdata)
 tags$p(paste("Number of Sample in dataset: ",nrow(unique(get(input$cancerdata)[1]))))
-
+}
 })
- output$tableTCGA <- renderTable({
+
+#Render head table depending on the select input. 
+output$tableTCGA <- renderTable({
 if (is.null(input$cancerdata))
       return(NULL)
 if (input$cancerdata!="")
@@ -550,16 +569,39 @@ head(get(input$cancerdata))
 
 })
 
- output$plotraw <- renderUI({
-                    
-                   
-                     if (is.null(input$cancerdata)){tags$b("tcga is null")}
-                      else{
-                     
-                      senv$object<-tcgaToObject(session,input$cancerdata)
-		      
-                    
-                     for (i in 1:senv$max_plots) {
+
+# Render UI with raw unmodified plots of the samples.
+# Lets the user select input parameters and number of plots to autocorrect.
+
+
+output$plotraw <- renderUI({
+                    cat("data_type is: ")
+                    cat(reactive$data_type)
+                    switch(reactive$data_type,
+
+                     tcga={reactive$do.plot<-TRUE},
+                     sampledata={senv$object<-ReadData(session,reactive$regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),reactive$sample_list,c("Number","Sample","Comment"))
+                            
+                            reactive$do.plot<-TRUE},
+                        RegionsUploaded={regions <- input$file1
+                                	region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
+                                        senv$object<-ReadData(session,regions$datapath,region_colnames) 
+                                        reactive$do.plot<-TRUE},
+
+                        RegionsAndSampleUploaded={regions <- input$file1
+                                	region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
+                                        sample_list <- input$file2
+		       	                sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
+                                        senv$object<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                                        reactive$do.plot<-TRUE},
+
+                                     
+                     #tcga={senv$do.plot<-TRUE},
+                     stop(return(tags$b("Please load some test data, upload your own data or load a data set from TCGA ")))
+                          )
+
+if(reactive$do.plot){
+for (i in 1:senv$max_plots) {
                           # Need local so that each item gets its own number. Without it, the value
                           # of i in the renderPlot() will be the same across all instances, because
                           # of when the expression is evaluated.
@@ -589,8 +631,9 @@ head(get(input$cancerdata))
   # Convert the list to a tagList - this is necessary for the list of items
    # to display properly.
    append(plot_output_list1,do.call(tagList, plot_output_list))
+}
 
-}})
+})
 
 
   output$csvtableRegions <- renderTable({
@@ -603,7 +646,7 @@ head(get(input$cancerdata))
     regions <- input$file1
     if (is.null(regions))
       return(NULL)
-    
+    reactive$data_type<-"RegionsUploaded"
     RegionInput=read.csv(regions$datapath, header=input$header, sep=input$sep, 
 				 quote=input$quote,nrows=10)
     RegionVariables=names(RegionInput)
@@ -627,7 +670,7 @@ head(get(input$cancerdata))
     sample <- input$file2
     if (is.null(sample))
       return(NULL)
-    
+        reactive$data_type<-"RegionsAndSampleUploaded"
     SampleInput=read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp, 
 				 quote=input$quotesamp,nrows=10)
     SampleVariables=names(SampleInput)
