@@ -8,9 +8,7 @@ R Shiny app for Baseline Correction for Copy Number Data from Cancer Samples
 
 ## Running
 Start the app with
- 
 library(shiny)
-
 runApp('shiny-baseline-correction-Cancer-CN')
 
 
