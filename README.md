@@ -7,8 +7,8 @@ R Shiny app for Baseline Correction for Copy Number Data from Cancer Samples
 * RATCG.CNV https://github.com/RTCGA/RTCGA.CNV or https://bioconductor.org/packages/devel/data/experiment/html/RTCGA.CNV.html
 
 ## Running
-Start the app with
-library(shiny)
+Start the app with  
+library(shiny)  
 runApp('shiny-baseline-correction-Cancer-CN')
 
 
