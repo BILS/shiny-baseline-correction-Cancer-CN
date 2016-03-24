@@ -10,7 +10,6 @@ shinyServer(function(input, output, session) {
     senv$object        <- NULL
     reactive$data_type <- ""
     reactive$do.plot   <- FALSE
-    #,shiny.error=recover,error=traceback)
 
     #New CopyNumber Functions
     #region_file fileinput path from Shiny
@@ -42,7 +41,6 @@ shinyServer(function(input, output, session) {
             SL      <- data.frame(Number, Sample, Comment, stringsAsFactors = F)
         }
 
-
         #store the sample list in the object
         object$SL <- SL
 
@@ -70,17 +68,19 @@ shinyServer(function(input, output, session) {
                 y <- y[ord]
             }
             idx = 2:length(x)
-            x <- as.vector(apply(cbind(x[idx - 1], x[idx]), 1, function(x) seq(x[1],
-                                                                               x[2], length.out = dens)))
-            y <- as.vector(apply(cbind(y[idx - 1], y[idx]), 1, function(x) seq(x[1],
-                                                                               x[2], length.out = dens)))
+            x <- as.vector(apply(cbind(x[idx - 1], x[idx]),
+                                 1, 
+                                 function(x) seq(x[1], x[2], length.out = dens)))
+            y <- as.vector(apply(cbind(y[idx - 1], y[idx]),
+                                 1, 
+                                 function(x) seq(x[1], x[2], length.out = dens)))
             if (!is.null(thresh)) {
                 y.0    <- y <= thresh
                 y[y.0] <- thresh
             }
             idx = 2:length(x)
-            integral <- as.double((x[idx] - x[idx - 1]) %*% (y[idx] +
-                                                             y[idx - 1]))/2
+            integral <- as.double((x[idx] - x[idx - 1]) %*% 
+                                  (y[idx] + y[idx - 1]))/2
             integral
         }
 
@@ -105,8 +105,8 @@ shinyServer(function(input, output, session) {
 
             max.peak.value    <- d$x[which.max(d$y)]
             point             <- which(d$x == (max.peak.value))
-            QC.peak.sharpness <- ( (d$y[point + 20] + d$y[point - 20]) / 2 )
-                                 / d$y[which(d$x == max.peak.value)]
+            QC.peak.sharpness <- ( (d$y[point + 20] + d$y[point - 20]) / 2 ) /
+                                 d$y[which(d$x == max.peak.value)]
 
             QC[i, "peak.sharpness"]                 <- as.numeric(QC.peak.sharpness)
             QC[i, "number.of.regions"]              <- length(sam[, 1])
@@ -171,8 +171,10 @@ shinyServer(function(input, output, session) {
 
     #NEW PLOT MODIFICATION
     Plot.Manual <- function(object, select=1, cutoff=0.1,markers=20, comments =FALSE, slider_value=0,...){
-        name         <- object$SL[select,"Sample"] # get the sample name
-        sam          <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(name)),] # get the sample segments
+        # get the sample name
+        name         <- object$SL[select,"Sample"]
+        # get the sample segments
+        sam          <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(name)),]
         original.sam <- sam  	
         if (hasArg(markers)) {
             sam <- sam[which(sam$Num.of.Markers>markers),]
@@ -197,14 +199,13 @@ shinyServer(function(input, output, session) {
                           adjust  = 0.15,
                           n       = 512)
         #plot the density
-        plot(d$y,
-             d$x,
-             ylim = c(-1,1),
+        plot(d$y, d$x,
              type = 'l',
+             ylim = c(-1,1),
+             xlim = rev(range(d$y)),
              ylab = "",
              xlab = "",
-             axes = FALSE,
-             xlim = rev(range(d$y)))
+             axes = FALSE)
         abline(h = c(0,-cutoff,cutoff), lty = 3)
         box()
         legend("bottomleft", legend="Density", cex=1)
@@ -239,18 +240,18 @@ shinyServer(function(input, output, session) {
 
     #this uses the regions file: Chromosome should be in this format: "chr1"
     #similar to the original function, this one use only the cutoff
-    plotRegions<-function(object, chr, start, end, cutoff=0.1,markers=20, ...) {
+    plotRegions <- function(object, chr, start, end, cutoff=0.1,markers=20, ...) {
         sample_segments <- object
 
         #if(hasArg(markers)){
-        #  sample_segments$Mean[which(sample_segments$Num.of.Markers<=markers)]<-0
+        #  sample_segments$Mean[which(sample_segments$Num.of.Markers<=markers)] <- 0
         #}
 
         segment_values <- as.numeric(sample_segments[,"Mean"])
         segment_colors <- rep("black", nrow(sample_segments))
 
         if (missing(cutoff)) {
-            cutoff<-(0.1)
+            cutoff <- (0.1)
         }
 
         segment_colors[as.numeric(segment_values) >= cutoff] <- "green"
@@ -280,36 +281,36 @@ shinyServer(function(input, output, session) {
         }
 
         yMin <- (-1) #min(c(-1, as.numeric(sample_segments[significant_segments, "Mean"])))
-        yMax <- 1 #max(c(1, as.numeric(sample_segments[significant_segments, "Mean"])))
+        yMax <- 1    #max(c(1, as.numeric(sample_segments[significant_segments, "Mean"])))
 
         #if (missing(ylab)) {
-        # ylab<-""
+        # ylab <- ""
         #}
 
         myPlot <- plot(range(start, end), range(yMin, yMax), type = "n",axes=FALSE, xaxt = x_axis_type, xlab="",ylab="", ...) #ylab="Mean",
 
         #---this function to plot the tick on the right side
-        tick.tick<-function (nx = 2, ny = 2, tick.ratio = 0.5) {
+        tick.tick <- function (nx = 2, ny = 2, tick.ratio = 0.5) {
             ax <- function(w, n, tick.ratio) {
-                range <- par("usr")[if (w == "x")
-                    1:2
-                else 3:4]
-                tick.pos <- if (w == "x")
-                    par("xaxp")
-                else par("yaxp")
+                range <- par("usr")[if (w == "x") 1:2 else 3:4]
+                tick.pos <- if (w == "x") {
+                        par("xaxp")
+                    } else {
+                        par("yaxp")
+                    }
                 distance.between.minor <- (tick.pos[2] - tick.pos[1])/tick.pos[3]/n
-                possible.minors <- tick.pos[1] - (0:100) * distance.between.minor
-                low.minor <- min(possible.minors[possible.minors >= range[1]])
+                possible.minors        <- tick.pos[1] - (0:100) * distance.between.minor
+                low.minor              <- min(possible.minors[possible.minors >= range[1]])
                 if (is.na(low.minor))
                     low.minor <- tick.pos[1]
+
                 possible.minors <- tick.pos[2] + (0:100) * distance.between.minor
-                hi.minor <- max(possible.minors[possible.minors <= range[2]])
+                hi.minor        <- max(possible.minors[possible.minors <= range[2]])
                 if (is.na(hi.minor))
                     hi.minor <- tick.pos[2]
-                axis(if (w == "x")
-                     1
-                 else 4, seq(low.minor, hi.minor, by = distance.between.minor),
-                 labels = FALSE, tcl = par("tcl") * tick.ratio)
+                axis(if (w == "x") 1 else 4,
+                     seq(low.minor, hi.minor, by = distance.between.minor),
+                     labels = FALSE, tcl = par("tcl") * tick.ratio)
             }
             if (nx > 1)
                 ax("x", nx, tick.ratio = tick.ratio)
@@ -335,10 +336,10 @@ shinyServer(function(input, output, session) {
 
         lapply(1:length(chromosomes), function(i) {
                    used_segments <- sample_segments[, "Chromosome"] == chromosomes[i]
-                   colors <- segment_colors[used_segments]
-                   starts <- as.numeric(sample_segments[used_segments, "bp.Start"]) + offset[i]
-                   ends <- as.numeric(sample_segments[used_segments, "bp.End"]) + offset[i]
-                   y <- as.numeric(sample_segments[used_segments, "Mean"])
+                   colors        <- segment_colors[used_segments]
+                   starts        <- as.numeric(sample_segments[used_segments, "bp.Start"]) + offset[i]
+                   ends          <- as.numeric(sample_segments[used_segments, "bp.End"]) + offset[i]
+                   y             <- as.numeric(sample_segments[used_segments, "Mean"])
                    graphics::segments(starts, y, ends, y, col = colors, lwd = 2, lty = 1)
                  })
 
@@ -346,13 +347,14 @@ shinyServer(function(input, output, session) {
     }
 
 
-    replaceChr<-function(object){
+    ### This function feels unidiomatic
+    replaceChr <- function(object){
+        chromosome1 <- c( "chr1",  "chr2",  "chr3",  "chr4",  "chr5",  "chr6",  "chr7", "chr8",
+                          "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15",
+                         "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX", "chrY")
 
-        chromosome1 <- c(  "chr1",    "chr2",    "chr3",    "chr4",    "chr5",    "chr6",    "chr7",    "chr8",
-                         "chr9",    "chr10",    "chr11",    "chr12",    "chr13",    "chr14",    "chr15",
-                         "chr16",    "chr17",    "chr18",    "chr19",    "chr20",    "chr21",    "chr22",    "chrX",    "chrY"    )
-
-        chromosome2 <- c(    1,    2,    3,    4,    5,    6,    7,    8,    9,    10,    11,    12,    13,    14,    15,    16,    17,
+        chromosome2 <- c(    1,    2,    3,    4,    5,    6,    7,    8,    9,
+                         10,    11,    12,    13,    14,    15,    16,    17,
                          18,    19,    20,    21,    22,    "X",    "Y"    )	
 
         for (i in 1:24){
@@ -362,19 +364,20 @@ shinyServer(function(input, output, session) {
         invisible(object)
     }
 
-    PlotRawData<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...){
-
+    PlotRawData <- function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...){
         name <- object$SL[select,"Sample"] # get the sample name
-        sam <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
-        if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
+        sam  <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
+        if (hasArg(markers)) {
+            sam <- sam[which(sam$Num.of.Markers>markers),]
+        }
 
         #to prepare the spaces for the plots
-        par(mfrow=c(1,2),mar=c(0,0,2,0),oma=c(0,0,0,4))
+        par(mfrow=c(1,2), mar=c(0,0,2,0), oma=c(0,0,0,4))
         layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE)
 
         #calculate the density
-        forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
-        d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+        forDen <- sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+        d      <- density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
         #plot the density
         plot(d$y,d$x,ylim=c(-1,1),type='l',ylab="",xlab="",axes=FALSE,xlim=rev(range(d$y)))
         abline(h = c(0,-cutoff,cutoff), lty = 3)
@@ -390,63 +393,60 @@ shinyServer(function(input, output, session) {
 
     #The Auto correction based on the highest peak-------------------
     #this function correct the mean of the regions based on the highest peak and plot them
-    AutoCorrectPeak<-function(object, cutoff=0.1,markers=20, ...){
+    AutoCorrectPeak <- function(object, cutoff=0.1,markers=20, ...){
 
-        if (missing(markers)) {markers<-(0)}
+        if (missing(markers)) {
+            markers <- (0)
+        }
 
         #prepare the QC file
-        QC<-object$SL[,1:2]
-        QC[,3:7]<-0
+        QC <- object$SL[,1:2]
+        QC[,3:7] <- 0
         colnames(QC) <- c("Sample","Comment","peak.sharpness","number.of.regions","IQR","SD","MAPD")
 
-
-
         for (i in 1:length(object$SL[,"Sample"])){ #correction
-
-
-            sam <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(object$SL[i,"Sample"])),]
-            forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
-
-            sam.original<-sam
-
-            d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
-            max.peak.value<-d$x[which.max(d$y)]
-            sam$Mean <- sam$Mean-max.peak.value
+            sam            <- object$regions_auto[which(object$regions_auto$Sample %in% as.character(object$SL[i,"Sample"])),]
+            forDen         <- sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+            sam.original   <- sam
+            d              <- density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+            max.peak.value <- d$x[which.max(d$y)]
+            sam$Mean       <- sam$Mean-max.peak.value
 
             #QC (peak sharpness) + (count the regions)
-            point<-which(d$x==(max.peak.value))  #for peak sharpness
-            QC.peak.sharpness <- ((d$y[point+20]+d$y[point-20])/2)/d$y[which(d$x==max.peak.value)]
-            QC[i,"peak.sharpness"] <- as.numeric(QC.peak.sharpness)
+            point                      <- which(d$x==(max.peak.value))  #for peak sharpness
+            QC.peak.sharpness          <- ((d$y[point+20]+d$y[point-20])/2)/d$y[which(d$x==max.peak.value)]
+            QC[i,"peak.sharpness"]     <- as.numeric(QC.peak.sharpness)
             QC[i,"number.of.regions"]  <- length(sam[,1]) # for number of the regions
 
-            QC[i,"IQR"]<-IQR(forDen[,"Mean"], na.rm = TRUE, type = 7) #for IQR
-            QC[i,"SD"]<-sd(forDen[,"Mean"], na.rm = TRUE) #for SD
-            QC[i,"MAPD"]<- median(abs(diff(forDen[,"Mean"],na.rm = TRUE)), na.rm = TRUE)# for Median Absolute Pairwise Difference (MAPD)
+            QC[i,"IQR"]  <- IQR(forDen[,"Mean"], na.rm = TRUE, type = 7) #for IQR
+            QC[i,"SD"]   <- sd(forDen[,"Mean"], na.rm = TRUE) #for SD
+            QC[i,"MAPD"] <- median(abs(diff(forDen[,"Mean"],na.rm = TRUE)), na.rm = TRUE)# for Median Absolute Pairwise Difference (MAPD)
 
-            object$regions_auto[which(object$regions_auto$Sample %in% as.character(object$SL[i,"Sample"])),"Mean"]<-sam$Mean #store the modifications
-            object$mod_auto[which(object$mod_auto$Sample %in% as.character(object$SL[i,"Sample"])),2:4]<-c(round(max.peak.value, 3),round(-max.peak.value, 3),"Auto")
+            object$regions_auto[which(object$regions_auto$Sample %in% as.character(object$SL[i,"Sample"])),"Mean"] <- sam$Mean #store the modifications
+            object$mod_auto[which(object$mod_auto$Sample %in% as.character(object$SL[i,"Sample"])),2:4] <- c(round(max.peak.value, 3),round(-max.peak.value, 3),"Auto")
         }
 
         #added for the new version
-        object$regions<-object$regions_auto
+        object$regions <- object$regions_auto
 
         object
     }
 
 
-    PlotAutoCorrect<-function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...) {
-
+    PlotAutoCorrect <- function(object, select=1, plots=TRUE,cutoff=0.1,markers=20, comments =FALSE,...) {
         name <- object$SL[select,"Sample"] # get the sample name
-        sam <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
-        if(hasArg(markers)){ sam<-sam[which(sam$Num.of.Markers>markers),] }
+        sam  <- object$regions[which(object$regions$Sample %in% as.character(name)),]   #get the sample segments
+        if (hasArg(markers)) {
+            sam <- sam[which(sam$Num.of.Markers>markers),]
+        }
 
         #to prepare the spaces for the plots
         par(mfrow=c(1,2),mar=c(0,0,2,0),oma=c(0,0,0,4))
         layout(matrix(c(1,2),1,2,byrow=TRUE), widths=c(3,21), heights=c(10), TRUE)
 
         #calculate the density
-        forDen<-sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
-        d<-density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
+        forDen <- sam[which(sam$Chromosome!="chrX" & sam$Chromosome!="chrY"),c("Num.of.Markers","Mean")]
+        d      <- density(forDen$Mean,weights=forDen$Num.of.Markers/sum(forDen$Num.of.Markers),na.rm=TRUE,kernel = c("gaussian"),adjust=0.15,n=512)
         #plot the density
         plot(d$y,d$x,ylim=c(-1,1),type='l',ylab="",xlab="",axes=FALSE,xlim=rev(range(d$y)))
         abline(h = c(0,-cutoff,cutoff), lty = 3)
@@ -475,7 +475,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$LoadSampleData, {
                      reactive$regions <- "DATA/regions.csv"
                      reactive$sample_list <- "DATA/sample_list.csv"
-                     reactive$data_type<-"sampledata"
+                     reactive$data_type <- "sampledata"
                      updateNavbarPage(session, "baseCN", selected = "Plot raw")
                  } )
 
@@ -500,8 +500,7 @@ shinyServer(function(input, output, session) {
                      for (i in 1:senv$max_plots) {
                          if(input$SelectAllSamples){
                              updateCheckboxInput(session, paste("PlotRawSamplecheckbox", i, sep=""), value =TRUE)
-                         }
-                         else {
+                         } else {
                              updateCheckboxInput(session, paste("PlotRawSamplecheckbox", i, sep=""), value=FALSE)
                          }						
                      }
@@ -511,46 +510,39 @@ shinyServer(function(input, output, session) {
 
     output$autocorrection <- renderUI({
 
-        if (is.null(input$cancerdata)){tags$b("tcga is null")}
-        # print(head(senv$object$regions))
-        senv$object<-AutoCorrectPeak(senv$object)
-        NumbCorrectedPlots<-0
+        if (is.null(input$cancerdata)) {
+            tags$b("tcga is null")
+        }
+        senv$object        <- AutoCorrectPeak(senv$object)
+        NumbCorrectedPlots <- 0
 
         for (i in 1:input$NumberSampleSlider) {
-            NumbCorrectedPlots <-local({
+            NumbCorrectedPlots <- local({
                 my_i <- i
 
                 if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
 
-                    NumbCorrectedPlots<-NumbCorrectedPlots+1
-                    my_corr <-NumbCorrectedPlots
-
-
-                    plotname <- paste("SampleCorrect", my_corr, sep="")
-                    plotslider <- paste("correctplotSlider", my_corr, sep="")
+                    NumbCorrectedPlots   <- NumbCorrectedPlots+1
+                    my_corr              <- NumbCorrectedPlots
+                                         
+                    plotname             <- paste("SampleCorrect", my_corr, sep="")
+                    plotslider           <- paste("correctplotSlider", my_corr, sep="")
 
                     output[[plotslider]] <- renderUI({sliderInput(plotslider,paste("Correct baseline: ",my_i, sep=""),max=2, min=-2,width='800px',value=0,step=0.01)})
-                    output[[plotname]] <- renderPlot({
-                        if(!is.null(input[[plotslider]]))
-                        {
-                            senv$object<-Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
-
+                    output[[plotname]]   <- renderPlot({
+                        if(!is.null(input[[plotslider]])) {
+                            senv$object <- Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=input[[plotslider]])
+                        } else {
+                            Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)
                         }
-                        else { Plot.Manual(senv$object, select=my_i,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments,slider_value=0)}
-
                     })
-
                 }
                 return(NumbCorrectedPlots) })
         }
 
         if (NumbCorrectedPlots==0){
-
             tags$div(tags$p("Please select at Least one sample"))
-
-
-        }	
-        else{
+        } else {
             plot_output_list_corr <- lapply(1:NumbCorrectedPlots, function(s) {
                                                 plotname <- paste("SampleCorrect", s, sep="")
                                                 plotslider <- paste("correctplotSlider", s, sep="")
@@ -566,42 +558,47 @@ shinyServer(function(input, output, session) {
         }
     })
 
-    output$downloadRegions <- downloadHandler(filename = function() { paste("reviewed_regions", '.csv', sep='') },
+    output$downloadRegions <- downloadHandler(filename = function() {
+                                                  paste("reviewed_regions", '.csv', sep='') 
+                                              },
                                               content = function(file) {
                                                   write.csv(senv$object$regions,file)
                                               })
-
 
     # Output for download
     # Creates and downloadHandler and plots
     output$downloadPlot <- downloadHandler(
         filename = 'plots.zip',
-        content = function(fname) {
+        content  = function(fname) {
             tmpdir <- tempdir()
             setwd(tempdir())
-            print(tempdir())
-            SelPlots<-0
+            SelPlots <- 0
 
             for (i in 1:input$NumberSampleSlider) {
-
                 my_i <- i
-                if(input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]){
-                    SelPlots<-SelPlots+1
-                    plotname<-paste("Sample",my_i,".png",sep="")
+                if (input[[paste("PlotRawSamplecheckbox", my_i, sep="")]]) {
+                    SelPlots <- SelPlots+1
+                    plotname <- paste("Sample",my_i,".png",sep="")
 
-                    if(SelPlots==1){fs<-c(plotname)}
-                    else {fs<-append(fs,plotname)}
+                    if (SelPlots==1) {
+                        fs <- c(plotname)
+                    } else {
+                        fs <- append(fs,plotname)
+                    }
+
                     png(filename=plotname)
-                    PlotRawData(senv$object, select=my_i, plots=TRUE,cutoff=input$NumberCutoffSlider,markers=input$NumberMarkerSlider, comments=input$ShowComments)
+                    PlotRawData(senv$object,
+                                select=my_i,
+                                plots=TRUE,
+                                cutoff=input$NumberCutoffSlider,
+                                markers=input$NumberMarkerSlider,
+                                comments=input$ShowComments)
                     dev.off()
-
                 }
             }
 
-            print (fs)
-
             zip(zipfile=fname, files=fs)
-        }
+        },
 
         contentType = "application/zip")
 
@@ -618,7 +615,7 @@ shinyServer(function(input, output, session) {
             paste("QC", '.csv', sep='')
         },
         content = function(file) {
-            senv$object<-QC.function(senv$object)
+            senv$object <- QC.function(senv$object)
             write.csv(senv$object$QC,file)
         })
 
@@ -635,7 +632,7 @@ shinyServer(function(input, output, session) {
         if (is.null(input$cancerdata))
             return(NULL)
         if (input$cancerdata!=""){
-            senv$object<-tcgaToObject(session,input$cancerdata)
+            senv$object <- tcgaToObject(session,input$cancerdata)
             tags$p(paste("Number of Sample in dataset: ",nrow(unique(get(input$cancerdata)[1]))))
         }
     })
@@ -646,33 +643,28 @@ shinyServer(function(input, output, session) {
             return(NULL)
         if (input$cancerdata!="")
             head(get(input$cancerdata))
-
     })
 
     # Render UI with raw unmodified plots of the samples.
     # Lets the user select input parameters and number of plots to autocorrect.
     output$plotraw <- renderUI({
-        cat("data_type is: ")
-        cat(reactive$data_type)
         switch(reactive$data_type,
+               tcga        = {reactive$do.plot <- TRUE},
+               sampledata  = {senv$object      <- ReadData(session,reactive$regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),reactive$sample_list,c("Number","Sample","Comment"))
+                              reactive$do.plot <- TRUE},
+               RegionsUploaded = {regions          <- input$file1
+                                  region_colnames  <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
+                                  senv$object      <- ReadData(session,regions$datapath,region_colnames)
+                                  reactive$do.plot <- TRUE},
 
-               tcga={reactive$do.plot<-TRUE},
-               sampledata={senv$object<-ReadData(session,reactive$regions,c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean"),reactive$sample_list,c("Number","Sample","Comment"))
+               RegionsAndSampleUploaded = {regions              <- input$file1
+                                           region_colnames      <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
+                                           sample_list          <- input$file2
+                                           sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
+                                           senv$object          <- ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
+                                           reactive$do.plot     <- TRUE},
 
-               reactive$do.plot<-TRUE},
-               RegionsUploaded={regions <- input$file1
-               region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
-               senv$object<-ReadData(session,regions$datapath,region_colnames)
-               reactive$do.plot<-TRUE},
-
-               RegionsAndSampleUploaded={regions <- input$file1
-               region_colnames <- c(input$RegionSample,input$RegionChromosome,input$Regionbpstart,input$Regionbpend,input$RegionNumMark,input$RegionMean)
-               sample_list <- input$file2
-               sample_list_colnames <- c(input$SampleNumber, input$SampleSample, input$SampleComment)
-               senv$object<-ReadData(session,regions$datapath,region_colnames, sample_list$datapath, sample_list_colnames)
-               reactive$do.plot<-TRUE},
-
-               #tcga={senv$do.plot<-TRUE},
+               #tcga={senv$do.plot <- TRUE},
                stop(return(tags$b("Please load some test data, upload your own data or load a data set from TCGA ")))
                )
 
@@ -682,8 +674,8 @@ shinyServer(function(input, output, session) {
                 # of i in the renderPlot() will be the same across all instances, because
                 # of when the expression is evaluated.
                 local({
-                    my_i <- i
-                    plotname <- paste("Sample", my_i, sep="")
+                    my_i         <- i
+                    plotname     <- paste("Sample", my_i, sep="")
                     plotcheckbox <- paste("plotcheckbox", my_i, sep="")
 
                     output[[plotname]] <- renderPlot({
@@ -694,7 +686,7 @@ shinyServer(function(input, output, session) {
                 })
             }
             plot_output_list1 <- tagList(checkboxInput("SelectAllSamples", label = "Select all Samples"))
-            plot_output_list <- lapply(1:input$NumberSampleSlider, function(i) {
+            plot_output_list  <- lapply(1:input$NumberSampleSlider, function(i) {
                                            plotname <- paste("Sample", i, sep="")
                                            plotcheckbox <- paste("plotcheckbox", i, sep="")
                                            tags$div(class = "group-output",
@@ -713,7 +705,6 @@ shinyServer(function(input, output, session) {
 
 
     output$csvtableRegions <- renderTable({
-
         # input$file1 will be NULL initially. After the user selects
         # and uploads a file, it will be a data frame with 'name',
         # 'size', 'type', and 'datapath' columns. The 'datapath'
@@ -722,23 +713,21 @@ shinyServer(function(input, output, session) {
         regions <- input$file1
         if (is.null(regions))
             return(NULL)
-        reactive$data_type<-"RegionsUploaded"
+        reactive$data_type <- "RegionsUploaded"
         RegionInput=read.csv(regions$datapath, header=input$header, sep=input$sep,
                              quote=input$quote,nrows=10)
         RegionVariables=names(RegionInput)
-        updateSelectInput(session, "RegionSample", choices = RegionVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",RegionVariables , value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "RegionSample",     choices = RegionVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",RegionVariables , value=TRUE,ignore.case =TRUE))
         updateSelectInput(session, "RegionChromosome", choices = RegionVariables, selected=grep("chromosome|chr|chromo",RegionVariables , value=TRUE,ignore.case =TRUE))
-        updateSelectInput(session, "Regionbpstart", choices = RegionVariables, selected=grep("bp([:blank:]|[:punct:])start|start|chromStart|from,",RegionVariables , value=TRUE,ignore.case =TRUE))
-        updateSelectInput(session, "Regionbpend", choices = RegionVariables, selected=grep("bp([:blank:]|[:punct:])End|ends|end|chromoEnd|to",RegionVariables , value=TRUE,ignore.case =TRUE))
-        updateSelectInput(session, "RegionNumMark", choices = RegionVariables, selected=grep("Num([:blank:]|[:punct:])of([:blank:]|[:punct:])Markers|markers|probes| number([:blank:]|[:punct:])of([:blank:]|[:punct:])probes|number([:blank:]|[:punct:])of([:blank:]|[:punct:])markers",RegionVariables , value=TRUE,ignore.case =TRUE))
-        updateSelectInput(session, "RegionMean", choices = RegionVariables, selected=grep("Mean|log|value|meanlog|L-value",RegionVariables , value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "Regionbpstart",    choices = RegionVariables, selected=grep("bp([:blank:]|[:punct:])start|start|chromStart|from,",RegionVariables , value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "Regionbpend",      choices = RegionVariables, selected=grep("bp([:blank:]|[:punct:])End|ends|end|chromoEnd|to",RegionVariables , value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "RegionNumMark",    choices = RegionVariables, selected=grep("Num([:blank:]|[:punct:])of([:blank:]|[:punct:])Markers|markers|probes| number([:blank:]|[:punct:])of([:blank:]|[:punct:])probes|number([:blank:]|[:punct:])of([:blank:]|[:punct:])markers",RegionVariables , value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "RegionMean",       choices = RegionVariables, selected=grep("Mean|log|value|meanlog|L-value",RegionVariables , value=TRUE,ignore.case =TRUE))
 
         RegionInput
-
     })
 
     output$csvtableSample <- renderTable({
-
         # input$file1 will be NULL initially. After the user selects
         # and uploads a file, it will be a data frame with 'name',
         # 'size', 'type', and 'datapath' columns. The 'datapath'
@@ -747,32 +736,29 @@ shinyServer(function(input, output, session) {
         sample <- input$file2
         if (is.null(sample))
             return(NULL)
-        reactive$data_type<-"RegionsAndSampleUploaded"
+        reactive$data_type <- "RegionsAndSampleUploaded"
         SampleInput=read.csv(sample$datapath, header=input$headersamp, sep=input$sepsamp,
                              quote=input$quotesamp,nrows=10)
         SampleVariables=names(SampleInput)
-        updateSelectInput(session, "SampleNumber", choices = SampleVariables, selected=grep("number|sample([:blank:]|[:punct:])number", SampleVariables, value=TRUE,ignore.case =TRUE))
-        updateSelectInput(session, "SampleSample", choices = SampleVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",SampleVariables , value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "SampleNumber",  choices = SampleVariables, selected=grep("number|sample([:blank:]|[:punct:])number", SampleVariables, value=TRUE,ignore.case =TRUE))
+        updateSelectInput(session, "SampleSample",  choices = SampleVariables, selected=grep("sample|name|sample([:blank:]|[:punct:])name|code|id",SampleVariables , value=TRUE,ignore.case =TRUE))
         updateSelectInput(session, "SampleComment", choices = SampleVariables, selected=grep("comment", SampleVariables, value=TRUE,ignore.case =TRUE))
         SampleInput
     })
 
     output$sampleButtonG2Raw <- renderUI({
-
         if (is.null(input$file2))
             return(NULL)
         actionButton("SampleActionButton", label = "Data looks OK. --> Plot samples?")
     })
 
     output$regionsbuttonsGo2Sample <- renderUI({
-
         if (is.null(input$file1))
             return(NULL)
         actionButton("RegionsActionButtonGo2Sample", label = "Data looks OK. --> Load sample sheet?")
     })
 
     output$regionsbuttonsGo2PlotRaw <- renderUI({
-
         if (is.null(input$file1))
             return(NULL)
         actionButton("RegionsActionButtonGo2PlotRaw", label = "Data looks OK. --> Plot samples?")
@@ -782,14 +768,13 @@ shinyServer(function(input, output, session) {
         actionButton("PlotActionButtonGo2Autocorrect", label = "Go to Auto correct")
     })
 
-    output$LoadDataButtons<- renderUI({
+    output$LoadDataButtons <- renderUI({
         tagList(tags$p(actionButton("LoadSampleData", label = "Load Sample Data")),
                 tags$p(actionButton("UpLoadData", label = "Upload Data")),
                 actionButton("LoadFromCancerAtlasData", label = "Browse and load Data from Cancer Atlas"))
     })
 
-    output$downloadButtons<- renderUI({
-
+    output$downloadButtons <- renderUI({
         tagList(column(2,downloadButton("downloadPlot", "Download Plot(s)")),
                 column(2,downloadButton("downloadRegions", "Download Regions CSV")),
                 column(3,downloadButton("downloadManual", "Download manual corrections CSV")),
