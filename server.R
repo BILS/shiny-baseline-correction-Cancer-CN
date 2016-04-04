@@ -54,6 +54,10 @@ shinyServer(function(input, output, session) {
     }
 
     # QC function from Nour
+    #the usage:
+    #the user selects cutoff and markers
+    #object <- QC.function(....)
+
     QC.function <- function(object, cutoff=0.1, markers=0, ...) {
 
         #function to calculate the area under the curve
@@ -124,9 +128,6 @@ shinyServer(function(input, output, session) {
         invisible(object)
     }
 
-    #the usage:
-    #the user selects cutoff and markers
-    #object <- QC.function(....)
 
     #Function to store the TCGA dataset in the regions of the object
     #Also translates the chromosome names
@@ -346,6 +347,7 @@ shinyServer(function(input, output, session) {
         myPlot
     }
 
+    #Update from Johan
     replaceChr <- function(object){
         object$Chromosome <-
              ifelse( grepl('^chr', object$Chromosome),    # If the name start with chr
@@ -610,6 +612,14 @@ shinyServer(function(input, output, session) {
             write.csv(senv$object$QC,file)
         })
 
+    output$downloadAutoCorrection <- downloadHandler(
+        filename = function() {
+            paste("AutoCorrections", '.csv', sep='')
+        },
+        content = function(file) {
+              write.csv(senv$object$mod_auto,file)
+        })
+
     #Select output from RTCGA.CNV package
     #Filling the select input from the results Item collumn.
     output$tcga <- renderUI({
@@ -767,8 +777,9 @@ shinyServer(function(input, output, session) {
 
     output$downloadButtons <- renderUI({
         tagList(column(2,downloadButton("downloadPlot", "Download Plot(s)")),
-                column(2,downloadButton("downloadRegions", "Download Regions CSV")),
-                column(3,downloadButton("downloadManual", "Download manual corrections CSV")),
+                column(2,downloadButton("downloadRegions", "Download Regions")),
+                column(3,downloadButton("downloadManual", "Download manual corrections")),
+                column(3,downloadButton("downloadAutoCorrection", "Download auto corrections")),
                 column(2,downloadButton("downloadQC", "Download QC")))
     })
 })

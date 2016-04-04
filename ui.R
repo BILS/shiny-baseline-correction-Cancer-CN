@@ -20,7 +20,6 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
                          checkboxInput('header', 'Header', TRUE),radioButtons('sep', 'Separator',c(Comma=',',Semicolon=';',Tab='\t'),','),
                          radioButtons('quote', 'Quote',c(None='','Double Quote'='"','Single Quote'="'"),'"'),
                          tags$div(tags$p("Select which column is:")),
-                         #c("Sample","Chromosome","bp.Start","bp.End","Num.of.Markers","Mean")
                          selectInput("RegionSample", "Sample:",NULL),
                          selectInput("RegionChromosome", "Chromosome:",NULL),
                          selectInput("Regionbpstart", "bp.Start:",NULL),
@@ -29,7 +28,6 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
                          selectInput("RegionMean", "Mean:",NULL)
                      ),
 
-                             # Tableoutput of files in mainpanel
                      mainPanel(tableOutput('csvtableRegions'),
                                uiOutput('regionsbuttonsGo2Sample'),
                                uiOutput('regionsbuttonsGo2PlotRaw'))
@@ -52,7 +50,6 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
                              selectInput("SampleComment", "Comment:",NULL)
                          ),
 
-                         # Tableoutput of files in mainpanel
                          mainPanel(tableOutput('csvtableSample'),
                                    uiOutput('sampleButtonG2Raw'))
                      )
@@ -89,8 +86,7 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
                                          value = 0.1),
                              checkboxInput('ShowComments', 'Show Comments?', TRUE),
                              uiOutput('plotbuttonsGo2Correct')),
-                         # Show a plot of the generated distribution
-                         mainPanel(uiOutput("plotraw"))
+                             mainPanel(uiOutput("plotraw"))
                      )
            )),
 
