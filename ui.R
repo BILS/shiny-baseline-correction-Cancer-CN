@@ -59,7 +59,8 @@ shinyUI(navbarPage("Baseline Correction for Copy Number Data from Cancer Samples
            fluidPage(titlePanel("TCGA"),
 	                 sidebarLayout(
                          sidebarPanel(uiOutput('tcga'), uiOutput('tcgaSamplenumber')),
-		                 mainPanel(tableOutput('tableTCGA'))
+		                 mainPanel(tableOutput('tableTCGA'),
+		                           uiOutput('tcgaButtonG2Raw'))
                      )
            )),
 

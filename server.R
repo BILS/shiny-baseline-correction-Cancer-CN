@@ -753,6 +753,10 @@ shinyServer(function(input, output, session) {
         actionButton("SampleActionButton", label = "Data looks OK. --> Plot samples?")
     })
 
+    output$tcgaButtonG2Raw <- renderUI({
+      actionButton("SampleActionButton", label = "Data looks OK. --> Plot samples?")
+    })
+    
     output$regionsbuttonsGo2Sample <- renderUI({
         if (is.null(input$file1))
             return(NULL)
