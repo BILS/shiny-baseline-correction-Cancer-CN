@@ -352,7 +352,7 @@ shinyServer(function(input, output, session) {
         object$Chromosome <-
              ifelse( grepl('^chr', object$Chromosome),    # If the name start with chr
                      object$Chromosome,                   # It's the right name
-                     paste('chr', t1$Chromosome, sep="")) # Else prepend 'chr'
+                     paste('chr', object$Chromosome, sep="")) # Else prepend 'chr'
 
         invisible(object)
     }
