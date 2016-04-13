@@ -579,7 +579,7 @@ shinyServer(function(input, output, session) {
                         fs <- append(fs,plotname)
                     }
 
-                    png(filename=plotname)
+                    png(filename=plotname,width = 1920,height = 1200)
                     PlotRawData(senv$object,
                                 select=my_i,
                                 plots=TRUE,
