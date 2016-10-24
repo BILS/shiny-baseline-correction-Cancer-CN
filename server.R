@@ -241,6 +241,10 @@ shinyServer(function(input, output, session) {
 
     #this uses the regions file: Chromosome should be in this format: "chr1"
     #similar to the original function, this one use only the cutoff
+    #This function plots the chromosomal regions (segments) with colored segments based on the cutoff. 
+    #This function was built based on "plotSample" function in "CopyNumber450k" package (http://www.bioconductor.org/packages/release/bioc/html/CopyNumber450k.html), and uses a modified "minor.tick" function in "Hmisc" package to draw small tick in the plots.
+
+
     plotRegions <- function(object, chr, start, end, cutoff=0.1,markers=20, ...) {
         sample_segments <- object
 
